@@ -58,6 +58,10 @@ export function PromptDialog({ open, title, label, initialValue, submitLabel = "
             e.preventDefault();
             inputRef.current?.select();
           }}
+          // Portal render ra ngoài <body> nhưng React vẫn bubble sự kiện theo CÂY REACT (nơi đặt
+          // component trong JSX) — dialog nằm trong 1 hàng/khối có onClick (vd điều hướng khi click
+          // hàng) thì bấm gì bên trong dialog cũng bubble lên tới đó nếu không chặn ở đây.
+          onClick={(e) => e.stopPropagation()}
           className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl shadow-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900"
         >
           <RadixDialog.Title className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{title}</RadixDialog.Title>

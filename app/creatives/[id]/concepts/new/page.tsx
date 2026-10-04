@@ -91,7 +91,7 @@ export default function NewConceptPage() {
               <span className="text-sm text-zinc-600 dark:text-zinc-400">
                 {file ? file.name : <>Kéo thả hoặc <span className="font-medium text-primary">chọn file</span></>}
               </span>
-              <Input required type="file" accept=".zip" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="hidden" />
+              <Input type="file" accept=".zip" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="hidden" />
             </label>
           </label>
 

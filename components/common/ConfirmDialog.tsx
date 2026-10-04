@@ -57,7 +57,13 @@ export function ConfirmDialog({
     >
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="fixed inset-0 z-50 bg-zinc-950/50 backdrop-blur-sm" />
-        <RadixDialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl shadow-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900">
+        <RadixDialog.Content
+          // Portal render ra ngoài <body> nhưng React vẫn bubble sự kiện theo CÂY REACT (nơi component
+          // này được đặt trong JSX), không theo cây DOM thật — dialog đặt trong 1 hàng bảng có onClick
+          // (vd TableRow điều hướng khi click) thì bấm nút trong dialog sẽ vô tình bubble lên tới đó.
+          // Chặn ở gốc Content để mọi nơi dùng ConfirmDialog khỏi phải tự nhớ stopPropagation.
+          onClick={(e) => e.stopPropagation()}
+          className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl shadow-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900">
           <RadixDialog.Title className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{title}</RadixDialog.Title>
           {description && <RadixDialog.Description className="mt-1.5 text-xs text-zinc-500">{description}</RadixDialog.Description>}
           {error && <p className="mt-3 text-xs text-red-600 dark:text-red-400">{error}</p>}

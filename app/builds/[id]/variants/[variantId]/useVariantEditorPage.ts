@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import {
@@ -121,6 +121,10 @@ export function useVariantEditorPage() {
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
 
+  // mediaId -> presigned URL, cache trong suốt phiên sửa biến thể này — khỏi gọi lại GET /media/:id
+  // mỗi lần debounce-preview bắn trong khi field asset đó chưa đổi.
+  const mediaUrlCache = useRef<Map<string, string>>(new Map());
+
   // Seed config từ variant đúng 1 lần mỗi khi ĐỔI variant.
   useEffect(() => {
     if (variant) {
@@ -168,12 +172,43 @@ export function useVariantEditorPage() {
     };
   }, [session, build, buildError, buildId]);
 
-  // Mỗi lần config đổi -> vá lại preview.
+  // Mỗi lần config đổi -> vá lại preview. Field @playgroundAsset lưu MediaAsset.id trong config (không
+  // phải URL) — phải resolve id -> presigned URL (GET /media/:id) trước khi inject, vì __pgApplyAsset
+  // ở engine chỉ biết fetch() 1 URL/data: URI, không biết gì về id trong kho Media của tool này.
   useEffect(() => {
     if (!baseHtml) return;
+    let cancelled = false;
 
-    const timer = setTimeout(() => {
-      const html = injectPlaygroundConfig(baseHtml, configToOverrides(config));
+    const timer = setTimeout(async () => {
+      const assetKeys = new Set(
+        (build?.fieldsRegistry?.matches ?? [])
+          .filter((m) => m.kind === "asset")
+          .map((m) => `${m.options.section || m.className}::${m.propName}`),
+      );
+
+      const resolved = await Promise.all(
+        configToOverrides(config).map(async (override) => {
+          const key = `${override.groupKey}::${override.propName}`;
+          if (!assetKeys.has(key) || typeof override.value !== "string" || !session) return override;
+
+          const mediaId = override.value;
+          let url = mediaUrlCache.current.get(mediaId);
+          if (!url) {
+            try {
+              const asset = await api.getMedia(session.accessToken, mediaId);
+              url = asset.url;
+              mediaUrlCache.current.set(mediaId, url);
+            } catch {
+              return null; // asset bị xoá/lỗi tải -> bỏ override, giữ nguyên asset gốc của engine
+            }
+          }
+          return { ...override, value: url };
+        }),
+      );
+
+      if (cancelled) return;
+      const overrides = resolved.filter((o): o is PlaygroundConfigOverride => o !== null);
+      const html = injectPlaygroundConfig(baseHtml, overrides);
 
       const blob = new Blob([html], {
         type: "text/html",
@@ -188,8 +223,11 @@ export function useVariantEditorPage() {
       });
     }, PREVIEW_DEBOUNCE_MS);
 
-    return () => clearTimeout(timer);
-  }, [baseHtml, config]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [baseHtml, config, build?.fieldsRegistry, session]);
 
   const canEdit =
     !!variant &&

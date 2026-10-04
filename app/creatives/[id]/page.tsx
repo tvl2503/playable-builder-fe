@@ -11,8 +11,10 @@ import {
   Breadcrumb,
   Button,
   Card,
+  ConfirmDialog,
   Dialog,
   PromptDialog,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -57,14 +59,13 @@ function ConceptRow({
 }) {
   const [deleting, setDeleting] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleDelete = async () => {
-    if (!confirm(`Xoá concept "${build.name}"? Mọi biến thể và bản build của nó cũng sẽ bị xoá.`)) return;
     setDeleting(true);
     try {
       await onDelete(build.id);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : String(err));
+    } finally {
       setDeleting(false);
     }
   };
@@ -131,7 +132,7 @@ function ConceptRow({
               type="button"
               variant="ghost"
               size="icon"
-              onClick={handleDelete}
+              onClick={() => setConfirmOpen(true)}
               disabled={deleting}
               className="text-zinc-400! hover:bg-red-50! hover:text-red-600! dark:hover:bg-red-950/40! dark:hover:text-red-400!"
               title="Xoá concept"
@@ -142,6 +143,16 @@ function ConceptRow({
           <ChevronRightIcon className="h-4 w-4 text-zinc-300 dark:text-zinc-700" />
         </div>
       </TableCell>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Xoá concept"
+        description={`Xoá concept "${build.name}"? Mọi biến thể và bản build của nó cũng sẽ bị xoá.`}
+        confirmLabel="Xoá concept"
+        danger
+        onConfirm={handleDelete}
+      />
     </TableRow>
   );
 }
@@ -314,11 +325,7 @@ export default function GameDetailPage() {
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-zinc-700 dark:text-zinc-300">Game đích</span>
-            <select
-              value={moveTargetGameId}
-              onChange={(e) => setMoveTargetGameId(e.target.value)}
-              className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
-            >
+            <Select value={moveTargetGameId} onChange={(e) => setMoveTargetGameId(e.target.value)}>
               <option value="">Chọn game...</option>
               {games
                 .filter((g) => g.id !== gameId)
@@ -327,7 +334,7 @@ export default function GameDetailPage() {
                     {g.name}
                   </option>
                 ))}
-            </select>
+            </Select>
           </label>
 
           {moveError && <p className="text-sm text-red-600 dark:text-red-400">{moveError}</p>}

@@ -16,25 +16,28 @@ interface Options {
 
 /** Controlled: page cha giữ state `config` (để vừa render form vừa dựng live preview), form chỉ đọc/ghi qua onChange. */
 export function usePlaygroundConfigForm({ fieldsRegistry, config, onChange }: Options) {
-  const allMatches = fieldsRegistry?.matches ?? [];
-  const fieldMatches = useMemo(() => allMatches.filter((m) => m.kind === "field"), [allMatches]);
-  const assetCount = allMatches.length - fieldMatches.length;
-
   const groups = useMemo(() => {
     const map = new Map<string, PlaygroundMatch[]>();
-    for (const match of fieldMatches) {
+    for (const match of fieldsRegistry?.matches ?? []) {
       const key = groupKey(match);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(match);
     }
     return map;
-  }, [fieldMatches]);
+  }, [fieldsRegistry]);
 
   const setValue = (group: string, prop: string, value: string | number | boolean) => {
     onChange({ ...config, [group]: { ...config[group], [prop]: value } });
   };
 
+  /** Xoá override (dùng cho field asset: bỏ chọn media, quay về asset gốc của engine). */
+  const clearValue = (group: string, prop: string) => {
+    const rest = { ...config[group] };
+    delete rest[prop];
+    onChange({ ...config, [group]: rest });
+  };
+
   const getValue = (group: string, match: PlaygroundMatch) => config[group]?.[match.propName] ?? match.defaultLiteral?.value;
 
-  return { groups, assetCount, setValue, getValue };
+  return { groups, setValue, clearValue, getValue };
 }

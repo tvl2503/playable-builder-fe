@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { Button } from "./common";
-import { ChevronRightIcon, GamesIcon, LayersIcon, LogoutIcon, ShieldIcon } from "./icons";
+import { ChevronRightIcon, GamesIcon, ImageIcon, LayersIcon, LogoutIcon, ShieldIcon } from "./icons";
 import { useSidebar, type SidebarNavItem } from "./useSidebar";
 
 const ICONS: Record<SidebarNavItem["id"], typeof GamesIcon> = {
   games: GamesIcon,
+  media: ImageIcon,
   "all-games": LayersIcon,
   admin: ShieldIcon,
 };

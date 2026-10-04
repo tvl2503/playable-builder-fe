@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-import { Button, Dialog, Input } from "@/components/common";
+import { Button, Dialog, Input, Select } from "@/components/common";
 import {
   ArrowLeftIcon,
   LayersIcon,
@@ -237,49 +237,13 @@ export default function VariantEditorPage() {
             <div className="flex h-12 shrink-0 items-center gap-2 border-b border-zinc-200 bg-white px-3 dark:border-zinc-800 dark:bg-zinc-900">
 
 
-              <div className="relative">
-                <select
-                  value={deviceId}
-                  onChange={(e) =>
-                    setDeviceId(e.target.value)
-                  }
-                  className="
-                    h-8
-                    min-w-[170px]
-                    appearance-none
-                    rounded-lg
-                    border
-                    border-zinc-200
-                    bg-white
-                    px-3
-                    pr-8
-                    text-xs
-                    font-medium
-                    text-zinc-700
-                    outline-none
-                    transition
-                    hover:border-zinc-300
-                    focus:border-zinc-400
-                    dark:border-zinc-700
-                    dark:bg-zinc-800
-                    dark:text-zinc-200
-                    dark:hover:border-zinc-600
-                  "
-                >
-                  {previewDevices.map((device) => (
-                    <option
-                      key={device.id}
-                      value={device.id}
-                    >
-                      {device.name}
-                    </option>
-                  ))}
-                </select>
-
-                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400">
-                  ▼
-                </span>
-              </div>
+              <Select compact value={deviceId} onChange={(e) => setDeviceId(e.target.value)}>
+                {previewDevices.map((device) => (
+                  <option key={device.id} value={device.id}>
+                    {device.name}
+                  </option>
+                ))}
+              </Select>
 
               {/* Resolution */}
 
@@ -380,6 +344,8 @@ export default function VariantEditorPage() {
               config={config}
               onChange={setConfig}
               readOnly={!canEdit}
+              token={session.accessToken}
+              gameId={build?.gameId ?? ""}
             />
           </div>
         </div>
@@ -398,7 +364,7 @@ export default function VariantEditorPage() {
         {shareUrl && (
           <div className="flex flex-col gap-3">
             <p className="text-xs text-zinc-500">
-              Ai có link này đều xem được (không cần đăng nhập, đã vá đúng config của biến thể "{variant?.name}"),{" "}
+              Ai có link này đều xem được (không cần đăng nhập, đã vá đúng config của biến thể &quot;{variant?.name}&quot;),{" "}
               {shareLink?.expiresAt
                 ? `hết hạn ngày ${new Date(shareLink.expiresAt).toLocaleString("vi-VN")}.`
                 : "không hết hạn."}

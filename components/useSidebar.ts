@@ -6,19 +6,20 @@ import { useAuth } from "@/lib/auth/context";
 import { routes } from "@/lib/routes";
 
 export interface SidebarNavItem {
-  id: "games" | "all-games" | "admin";
+  id: "games" | "media" | "all-games" | "admin";
   label: string;
   href: string;
 }
 
 const NAV_ITEMS: SidebarNavItem[] = [
   { id: "games", label: "Creatives", href: routes.creatives },
+  { id: "media", label: "Media", href: routes.media },
   { id: "all-games", label: "All Games", href: routes.allGames },
 ];
 
 const ADMIN_NAV_ITEM: SidebarNavItem = {
   id: "admin",
-  label: "Quản trị",
+  label: "Admin",
   href: routes.admin,
 };
 

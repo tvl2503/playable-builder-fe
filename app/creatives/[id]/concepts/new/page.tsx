@@ -1,15 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Button, Card, Checkbox, Input } from "@/components/common";
+import { Button, Card, Checkbox, Input, Select } from "@/components/common";
 import { ArrowLeftIcon, UploadCloudIcon } from "@/components/icons";
 import { PageLoading } from "@/components/Spinner";
+import { formatBytes } from "@/lib/format";
 import { routes } from "@/lib/routes";
 import { useNewConceptPage, type PngMode } from "./useNewConceptPage";
-
-function formatKb(bytes: number): string {
-  return (bytes / 1024).toFixed(0) + " KB";
-}
 
 const PNG_MODES: { value: PngMode; label: string }[] = [
   { value: "off", label: "Tắt — giữ nguyên ảnh gốc" },
@@ -35,6 +33,8 @@ export default function NewConceptPage() {
     togglePngCompress,
     toggleAllPngCompress,
   } = useNewConceptPage();
+
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   if (!session) return <PageLoading />;
 
@@ -65,33 +65,45 @@ export default function NewConceptPage() {
               File .zip của thư mục build <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs dark:bg-zinc-800">web-mobile</code>
             </span>
             <label
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDraggingFile(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                setIsDraggingFile(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDraggingFile(false);
+                const dropped = e.dataTransfer.files?.[0];
+                if (dropped) setFile(dropped);
+              }}
               className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors ${
-                file
-                  ? "border-primary/40 bg-primary-soft"
-                  : "border-zinc-300 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600"
+                isDraggingFile
+                  ? "border-primary bg-primary-soft"
+                  : file
+                    ? "border-primary/40 bg-primary-soft"
+                    : "border-zinc-300 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600"
               }`}
             >
               <UploadCloudIcon className={`h-8 w-8 ${file ? "text-primary" : "text-zinc-400"}`} />
               <span className="text-sm text-zinc-600 dark:text-zinc-400">
                 {file ? file.name : <>Kéo thả hoặc <span className="font-medium text-primary">chọn file</span></>}
               </span>
-              <input required type="file" accept=".zip" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="hidden" />
+              <Input required type="file" accept=".zip" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="hidden" />
             </label>
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-zinc-700 dark:text-zinc-300">Nén ảnh</span>
-            <select
-              value={pngMode}
-              onChange={(e) => setPngMode(e.target.value as PngMode)}
-              className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
-            >
+            <Select value={pngMode} onChange={(e) => setPngMode(e.target.value as PngMode)}>
               {PNG_MODES.map((m) => (
                 <option key={m.value} value={m.value}>
                   {m.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
 
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -108,14 +120,24 @@ export default function NewConceptPage() {
                 {isScanningZip ? "Đang quét ảnh trong zip..." : `Ảnh PNG (${compressCount}/${pngImages.length} sẽ được nén)`}
               </span>
               {pngImages.length > 0 && (
-                <div className="flex gap-2 text-xs">
-                  <button type="button" onClick={() => toggleAllPngCompress(true)} className="text-primary hover:underline">
+                <div className="flex items-center gap-2 text-xs">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => toggleAllPngCompress(true)}
+                    className="h-auto! rounded-none! p-0! text-xs! text-primary! hover:bg-transparent! hover:underline"
+                  >
                     Chọn tất cả
-                  </button>
+                  </Button>
                   <span className="text-zinc-300 dark:text-zinc-700">/</span>
-                  <button type="button" onClick={() => toggleAllPngCompress(false)} className="text-primary hover:underline">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => toggleAllPngCompress(false)}
+                    className="h-auto! rounded-none! p-0! text-xs! text-primary! hover:bg-transparent! hover:underline"
+                  >
                     Bỏ chọn tất cả
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -133,7 +155,7 @@ export default function NewConceptPage() {
                   >
                     <div className="flex w-full items-center justify-between">
                       <Checkbox checked={img.compress} onChange={() => togglePngCompress(img.path)} className="h-3.5! w-3.5!" />
-                      <span className="text-[10px] text-zinc-400">{formatKb(img.size)}</span>
+                      <span className="text-[10px] text-zinc-400">{formatBytes(img.size)}</span>
                     </div>
                     <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded bg-[repeating-conic-gradient(#8883_0%_25%,transparent_0%_50%)] bg-[length:10px_10px]">
                       {img.dataUrl && (

@@ -18,7 +18,10 @@ export type PermKey =
   | "variant:delete_own"
   | "variant:delete_any"
   | "export"
-  | "share";
+  | "share"
+  | "media:upload"
+  | "media:delete_own"
+  | "media:delete_any";
 
 export interface EffectivePermissions {
   isAdmin: boolean;
@@ -41,7 +44,7 @@ export function can(perms: EffectivePermissions | null, key: PermKey): boolean {
 /** true nếu user có `${resource}:${action}_any`, hoặc là chủ sở hữu (createdById) và có `${resource}:${action}_own`. */
 export function canOnResource(
   perms: EffectivePermissions | null,
-  resource: "concept" | "variant",
+  resource: "concept" | "variant" | "media",
   action: "edit" | "delete",
   ownerId: string,
   userId: string | undefined,

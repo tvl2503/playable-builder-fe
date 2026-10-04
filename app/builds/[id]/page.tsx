@@ -4,7 +4,23 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Breadcrumb, Button, Card, Checkbox, Dialog, PromptDialog, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common";
+import {
+  Breadcrumb,
+  Button,
+  Card,
+  Checkbox,
+  ConfirmDialog,
+  Dialog,
+  Input,
+  PromptDialog,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/common";
 import { EmptyState } from "@/components/EmptyState";
 import { PageLoading, Spinner } from "@/components/Spinner";
 import {
@@ -119,15 +135,18 @@ export default function BuildDetailPage() {
   const [moveTargetGameId, setMoveTargetGameId] = useState("");
   const [moving, setMoving] = useState(false);
   const [moveError, setMoveError] = useState<string | null>(null);
+  const [isDraggingReuploadFile, setIsDraggingReuploadFile] = useState(false);
+  const [confirmDeleteBuild, setConfirmDeleteBuild] = useState(false);
+  const [deleteVariantTarget, setDeleteVariantTarget] = useState<{ id: string; name: string } | null>(null);
 
   const handleDeleteBuild = async () => {
-    if (!build || !confirm(`Xoá concept "${build.name}"? Mọi biến thể và bản build của nó cũng sẽ bị xoá.`)) return;
+    if (!build) return;
     setDeletingBuild(true);
     try {
       await deleteBuild();
     } catch (err) {
-      alert(err instanceof Error ? err.message : String(err));
       setDeletingBuild(false);
+      throw err;
     }
   };
 
@@ -161,13 +180,10 @@ export default function BuildDetailPage() {
     }
   };
 
-  const handleDeleteVariant = async (variantId: string, name: string) => {
-    if (!confirm(`Xoá biến thể "${name}"?`)) return;
+  const handleDeleteVariant = async (variantId: string) => {
     setDeletingVariantId(variantId);
     try {
       await deleteVariant(variantId);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : String(err));
     } finally {
       setDeletingVariantId(null);
     }
@@ -250,7 +266,7 @@ export default function BuildDetailPage() {
             </Button>
           )}
           {canDeleteThisBuild && (
-            <Button variant="danger" size="sm" onClick={handleDeleteBuild} loading={deletingBuild}>
+            <Button variant="danger" size="sm" onClick={() => setConfirmDeleteBuild(true)} loading={deletingBuild}>
               <TrashIcon className="h-4 w-4" />
               Xoá concept
             </Button>
@@ -443,7 +459,7 @@ export default function BuildDetailPage() {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDeleteVariant(variant.id, variant.name)}
+                              onClick={() => setDeleteVariantTarget({ id: variant.id, name: variant.name })}
                               disabled={deletingVariantId === variant.id}
                               className="text-zinc-400! hover:bg-red-50! hover:text-red-600! dark:hover:bg-red-950/40! dark:hover:text-red-400!"
                               title="Xoá biến thể"
@@ -473,15 +489,31 @@ export default function BuildDetailPage() {
         onSubmit={handleRenameSubmit}
       />
 
+      <ConfirmDialog
+        open={confirmDeleteBuild}
+        onOpenChange={setConfirmDeleteBuild}
+        title="Xoá concept"
+        description={`Xoá concept "${build.name}"? Mọi biến thể và bản build của nó cũng sẽ bị xoá.`}
+        confirmLabel="Xoá concept"
+        danger
+        onConfirm={handleDeleteBuild}
+      />
+
+      <ConfirmDialog
+        open={deleteVariantTarget !== null}
+        onOpenChange={(open) => !open && setDeleteVariantTarget(null)}
+        title="Xoá biến thể"
+        description={`Xoá biến thể "${deleteVariantTarget?.name}"?`}
+        confirmLabel="Xoá biến thể"
+        danger
+        onConfirm={() => handleDeleteVariant(deleteVariantTarget!.id)}
+      />
+
       <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen} title="Chuyển concept sang game khác">
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-zinc-700 dark:text-zinc-300">Game đích</span>
-            <select
-              value={moveTargetGameId}
-              onChange={(e) => setMoveTargetGameId(e.target.value)}
-              className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
-            >
+            <Select value={moveTargetGameId} onChange={(e) => setMoveTargetGameId(e.target.value)}>
               <option value="">Chọn game...</option>
               {games
                 .filter((g) => g.id !== build.gameId)
@@ -490,7 +522,7 @@ export default function BuildDetailPage() {
                     {g.name}
                   </option>
                 ))}
-            </select>
+            </Select>
           </label>
 
           {moveError && <p className="text-sm text-red-600 dark:text-red-400">{moveError}</p>}
@@ -512,33 +544,45 @@ export default function BuildDetailPage() {
                 File .zip của thư mục build <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs dark:bg-zinc-800">web-mobile</code>
               </span>
               <label
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDraggingReuploadFile(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  setIsDraggingReuploadFile(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingReuploadFile(false);
+                  const dropped = e.dataTransfer.files?.[0];
+                  if (dropped) setReuploadFile(dropped);
+                }}
                 className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-6 text-center transition-colors ${
-                  reuploadFile
-                    ? "border-primary/40 bg-primary-soft"
-                    : "border-zinc-300 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600"
+                  isDraggingReuploadFile
+                    ? "border-primary bg-primary-soft"
+                    : reuploadFile
+                      ? "border-primary/40 bg-primary-soft"
+                      : "border-zinc-300 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600"
                 }`}
               >
                 <UploadCloudIcon className={`h-7 w-7 ${reuploadFile ? "text-primary" : "text-zinc-400"}`} />
                 <span className="text-sm text-zinc-600 dark:text-zinc-400">
                   {reuploadFile ? reuploadFile.name : <>Kéo thả hoặc <span className="font-medium text-primary">chọn file</span></>}
                 </span>
-                <input type="file" accept=".zip" onChange={(e) => setReuploadFile(e.target.files?.[0] ?? null)} className="hidden" />
+                <Input type="file" accept=".zip" onChange={(e) => setReuploadFile(e.target.files?.[0] ?? null)} className="hidden" />
               </label>
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-zinc-700 dark:text-zinc-300">Nén ảnh</span>
-              <select
-                value={reuploadPngMode}
-                onChange={(e) => setReuploadPngMode(e.target.value as ReuploadPngMode)}
-                className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
-              >
+              <Select value={reuploadPngMode} onChange={(e) => setReuploadPngMode(e.target.value as ReuploadPngMode)}>
                 {REUPLOAD_PNG_MODES.map((m) => (
                   <option key={m.value} value={m.value}>
                     {m.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
 
             {reuploadError && <p className="text-sm text-red-600 dark:text-red-400">{reuploadError}</p>}

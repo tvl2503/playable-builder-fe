@@ -13,6 +13,10 @@ export const swrKeys = {
   variants: (buildId: string) => `variants:${buildId}`,
   variant: (id: string) => `variant:${id}`,
   networks: () => "networks",
+  /** filter = JSON.stringify({gameId?, kind?, search?}) đã chuẩn hoá — xem useMediaLibraryPage.ts. */
+  media: (filterKey: string) => `media:${filterKey}`,
+  /** 1 MediaAsset theo id — dùng để hiện thumbnail/resolve URL cho field @playgroundAsset (giá trị config chỉ lưu id). */
+  mediaItem: (id: string) => `media-item:${id}`,
   users: () => "users",
   permissionsMatrix: () => "admin:permissions",
 };

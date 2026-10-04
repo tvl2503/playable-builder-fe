@@ -144,6 +144,22 @@ export interface ApiReuploadPreview {
   fieldsRegistry: PlaygroundFieldsRegistry;
 }
 
+export type MediaKind = "IMAGE" | "AUDIO";
+
+/** Khớp MediaAsset ở playable-builder/prisma/schema.prisma — `url` là presigned download URL (1h), chỉ dùng để browse/pick, không lưu lại lâu dài ở đâu khác. */
+export interface ApiMediaAsset {
+  id: string;
+  name: string;
+  kind: MediaKind;
+  mimeType: string;
+  sizeBytes: number;
+  storageKey: string;
+  gameId: string;
+  createdById: string;
+  createdAt: string;
+  url: string;
+}
+
 export interface ApiVariant {
   id: string;
   buildId: string;
@@ -235,6 +251,25 @@ export const api = {
   renameVariant: (token: string, id: string, name: string) => apiPatch<ApiVariant>(`/variants/${id}`, { name }, authHeader(token)),
   deleteVariant: (token: string, id: string) => apiDelete<void>(`/variants/${id}`, authHeader(token)),
   duplicateVariant: (token: string, id: string) => apiPost<ApiVariant>(`/variants/${id}/duplicate`, {}, authHeader(token)),
+
+  /** gameId bỏ trống = duyệt media của mọi game (kho dùng chéo game) — xem MediaService.list() ở backend. */
+  listMedia: (token: string, filter?: { gameId?: string; kind?: MediaKind; search?: string }) => {
+    const params = new URLSearchParams();
+    if (filter?.gameId) params.set("gameId", filter.gameId);
+    if (filter?.kind) params.set("kind", filter.kind);
+    if (filter?.search) params.set("search", filter.search);
+    const qs = params.toString();
+    return apiGet<ApiMediaAsset[]>(`/media${qs ? `?${qs}` : ""}`, authHeader(token));
+  },
+  uploadMedia: (token: string, gameId: string, file: File, name?: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    if (name) form.append("name", name);
+    return apiPost<ApiMediaAsset>(`/games/${gameId}/media`, form, authHeader(token));
+  },
+  /** Dùng để resolve 1 `mediaId` (lưu trong playgroundConfig của field asset) ra URL thật lúc preview — xem useVariantEditorPage.ts. */
+  getMedia: (token: string, id: string) => apiGet<ApiMediaAsset>(`/media/${id}`, authHeader(token)),
+  deleteMedia: (token: string, id: string) => apiDelete<void>(`/media/${id}`, authHeader(token)),
 
   getMyPermissions: (token: string) => apiGet<{ isAdmin: boolean; keys: string[] }>("/auth/me/permissions", authHeader(token)),
 

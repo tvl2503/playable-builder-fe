@@ -1,7 +1,13 @@
 "use client";
 
-import type { PlaygroundConfig, PlaygroundFieldsRegistry, PlaygroundFieldType, PlaygroundMatch } from "@/lib/api";
-import { Checkbox, ColorInput, Input, Slider } from "@/components/common";
+import { useState } from "react";
+import useSWR from "swr";
+import { api, type MediaKind, type PlaygroundConfig, type PlaygroundFieldsRegistry, type PlaygroundFieldType, type PlaygroundMatch } from "@/lib/api";
+import { AudioPlayButton } from "@/components/AudioPlayButton";
+import { Button, Checkbox, ColorInput, Input, Slider } from "@/components/common";
+import { MediaPicker } from "@/components/MediaPicker";
+import { ImageIcon, MusicIcon } from "@/components/icons";
+import { swrKeys } from "@/lib/api/swr-keys";
 import { usePlaygroundConfigForm } from "./usePlaygroundConfigForm";
 
 interface Props {
@@ -9,6 +15,9 @@ interface Props {
   config: PlaygroundConfig;
   onChange: (config: PlaygroundConfig) => void;
   readOnly?: boolean;
+  /** Cần cho field @playgroundAsset: mở MediaPicker (gọi API kho Media) + biết upload asset mới vào game nào. */
+  token: string;
+  gameId: string;
 }
 
 /** Build cũ scan trước khi có fieldType (fieldsRegistry cũ lưu trong DB không có field này) — đoán lại y hệt logic phía backend, xem resolvePlaygroundFieldType() ở playgroundFields.ts. */
@@ -34,16 +43,18 @@ function colorValueToHex(value: unknown): string {
   return "#000000";
 }
 
-export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnly }: Props) {
-  const { groups, assetCount, setValue, getValue } = usePlaygroundConfigForm({ fieldsRegistry, config, onChange });
+/** Khớp ASSET_RUNTIME_KINDS ở playable-builder/src/pipeline/playgroundFields.ts — 2 loại duy nhất __pgApplyAsset hỗ trợ. */
+function assetKindToMediaKind(assetKind: string | null): MediaKind | null {
+  if (assetKind === "spriteFrame") return "IMAGE";
+  if (assetKind === "audioClip") return "AUDIO";
+  return null;
+}
+
+export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnly, token, gameId }: Props) {
+  const { groups, setValue, clearValue, getValue } = usePlaygroundConfigForm({ fieldsRegistry, config, onChange });
 
   if (groups.size === 0) {
-    return (
-      <p className="text-xs leading-relaxed text-zinc-500">
-        Build này không có @playgroundField nào để chỉnh
-        {assetCount > 0 ? ` (có ${assetCount} @playgroundAsset — chưa hỗ trợ chỉnh ở giao diện này)` : ""}.
-      </p>
-    );
+    return <p className="text-xs leading-relaxed text-zinc-500">Build này không có @playgroundField/@playgroundAsset nào để chỉnh.</p>;
   }
 
   return (
@@ -53,6 +64,24 @@ export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnl
           <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{group}</div>
           {matches.map((match) => {
             const current = getValue(group, match);
+
+            if (match.kind === "asset") {
+              return (
+                <div key={match.propName} className="flex items-center justify-between gap-2 text-xs">
+                  <span className="text-zinc-600 dark:text-zinc-400">{match.propName}</span>
+                  <AssetFieldInput
+                    token={token}
+                    gameId={gameId}
+                    assetKind={match.assetKind}
+                    mediaId={typeof current === "string" ? current : undefined}
+                    readOnly={readOnly}
+                    onChange={(mediaId) => setValue(group, match.propName, mediaId)}
+                    onClear={() => clearValue(group, match.propName)}
+                  />
+                </div>
+              );
+            }
+
             const typeInfo = match.fieldType ?? { type: inferFieldType(match.defaultLiteral?.value) };
             return (
               <label key={match.propName} className="flex items-center justify-between gap-2 text-xs">
@@ -68,6 +97,68 @@ export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnl
           })}
         </div>
       ))}
+    </div>
+  );
+}
+
+function AssetFieldInput({
+  token,
+  gameId,
+  assetKind,
+  mediaId,
+  readOnly,
+  onChange,
+  onClear,
+}: {
+  token: string;
+  gameId: string;
+  assetKind: string | null;
+  mediaId: string | undefined;
+  readOnly?: boolean;
+  onChange: (mediaId: string) => void;
+  onClear: () => void;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const mediaKind = assetKindToMediaKind(assetKind);
+  const { data: asset } = useSWR(mediaId ? swrKeys.mediaItem(mediaId) : null, () => api.getMedia(token, mediaId!));
+
+  if (!mediaKind) {
+    return <span className="text-[11px] text-zinc-400">Không hỗ trợ ({assetKind ?? "?"})</span>;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900">
+        {!mediaId ? (
+          mediaKind === "IMAGE" ? (
+            <ImageIcon className="h-4 w-4 text-zinc-300 dark:text-zinc-700" />
+          ) : (
+            <MusicIcon className="h-4 w-4 text-zinc-300 dark:text-zinc-700" />
+          )
+        ) : asset ? (
+          mediaKind === "IMAGE" ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={asset.url} alt="" className="h-full w-full object-contain" />
+          ) : (
+            <AudioPlayButton src={asset.url} />
+          )
+        ) : (
+          <ImageIcon className="h-4 w-4 animate-pulse text-zinc-300 dark:text-zinc-700" />
+        )}
+      </div>
+
+      {!readOnly && (
+        <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+          {mediaId ? "Đổi" : "Chọn"}
+        </Button>
+      )}
+      {!readOnly && mediaId && (
+        <Button type="button" variant="ghost" size="sm" className="text-zinc-400!" onClick={onClear}>
+          Xoá
+        </Button>
+      )}
+
+      <MediaPicker open={pickerOpen} onOpenChange={setPickerOpen} token={token} gameId={gameId} kind={mediaKind} onSelect={onChange} />
     </div>
   );
 }

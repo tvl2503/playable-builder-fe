@@ -235,6 +235,42 @@ export function GithubIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
+export function ImageIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M2.25 15.75 8.69 9.3a2.25 2.25 0 013.182 0l5.368 5.368m-1.5-1.5 1.045-1.045a2.25 2.25 0 013.182 0l2.475 2.475M14.25 7.5h.008v.008h-.008V7.5zM3.75 19.5h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z"
+      />
+    </svg>
+  );
+}
+
+export function MusicIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25V5.408a1.5 1.5 0 011.17-1.463l7.5-1.667A1.5 1.5 0 0119.5 3.75v11.5M9 17.25a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm10.5-2v2a2.25 2.25 0 11-4.5 0v-2a2.25 2.25 0 114.5 0z" />
+    </svg>
+  );
+}
+
+export function PlayIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M8.25 4.5v15l12-7.5-12-7.5z" />
+    </svg>
+  );
+}
+
+export function PauseIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M6.75 5.25a.75.75 0 01.75-.75h2.25a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0a.75.75 0 01.75-.75h2.25a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75h-2.25a.75.75 0 01-.75-.75V5.25z" />
+    </svg>
+  );
+}
+
 export function GoogleIcon() {
   return (
     <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">

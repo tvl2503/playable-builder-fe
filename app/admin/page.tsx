@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, Checkbox } from "@/components/common";
+import { Button, Checkbox, Select } from "@/components/common";
 import { PageLoading, Spinner } from "@/components/Spinner";
 import type { Role } from "@/lib/api";
 import { useAdminPage } from "./useAdminPage";
@@ -73,19 +73,18 @@ export default function AdminPage() {
                   <div key={u.id} className="grid grid-cols-[1fr_1fr_auto] items-center gap-4 px-4 py-3 text-sm">
                     <span className="truncate font-medium text-zinc-900 dark:text-zinc-50">{u.name}</span>
                     <span className="truncate text-xs text-zinc-500">{u.email}</span>
-                    <select
+                    <Select
                       value={u.role}
                       disabled={savingUserId === u.id || u.id === session.user.id}
                       onChange={(e) => updateUserRole(u.id, e.target.value as Role)}
                       title={u.id === session.user.id ? "Không thể tự đổi role của chính mình" : undefined}
-                      className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
                     >
                       {ALL_ROLES.map((r) => (
                         <option key={r} value={r}>
                           {ROLE_LABEL[r]}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 ))}
               </div>

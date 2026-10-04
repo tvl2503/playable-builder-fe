@@ -12,6 +12,8 @@ export const routes = {
   creative: (gameId: string) => `/creatives/${gameId}`,
   creativeConceptNew: (gameId: string) => `/creatives/${gameId}/concepts/new`,
 
+  media: "/media",
+
   allGames: "/all-games",
   admin: "/admin",
 

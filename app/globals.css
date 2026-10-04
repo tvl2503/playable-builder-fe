@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/**
+ * Mặc định Tailwind v4 lái `dark:` theo prefers-color-scheme (media query) — không toggle tay được.
+ * Đổi sang lái bằng attribute data-theme trên <html> (set bởi inline script ở app/layout.tsx +
+ * lib/theme/store.ts) để có nút chuyển light/dark thủ công, không phụ thuộc OS.
+ */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   --background: #fafaf9;
   --foreground: #18181b;
@@ -24,15 +31,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #f4f4f5;
-    --surface: #18181b;
-    --surface-border: #27272a;
-    --muted: #a1a1aa;
-    --primary-soft: #431407;
-  }
+[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #f4f4f5;
+  --surface: #18181b;
+  --surface-border: #27272a;
+  --muted: #a1a1aa;
+  --primary-soft: #431407;
 }
 
 body {

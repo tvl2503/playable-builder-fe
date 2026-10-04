@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { Button } from "./common";
-import { ChevronRightIcon, GamesIcon, ImageIcon, LayersIcon, LogoutIcon, ShieldIcon } from "./icons";
+import { ChevronRightIcon, GamesIcon, ImageIcon, LayersIcon, LogoutIcon, MoonIcon, ShieldIcon, SunIcon, UnityIcon } from "./icons";
 import { useSidebar, type SidebarNavItem } from "./useSidebar";
 
 const ICONS: Record<SidebarNavItem["id"], typeof GamesIcon> = {
   games: GamesIcon,
   media: ImageIcon,
   "all-games": LayersIcon,
+  "unity-playworks": UnityIcon,
   admin: ShieldIcon,
 };
 
@@ -20,7 +21,7 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 export function Sidebar() {
-  const { user, navItems, isActive, handleLogout, collapsed, toggleCollapsed } = useSidebar();
+  const { user, navItems, isActive, handleLogout, collapsed, toggleCollapsed, theme, toggleTheme } = useSidebar();
 
   const displayName = user?.name ?? "User";
   const email = user?.email ?? "";
@@ -111,6 +112,16 @@ export function Sidebar() {
                 <p className="truncate text-xs text-zinc-500">{user ? (ROLE_LABEL[user.role] ?? user.role) : email}</p>
               </div>
             )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
+              className="shrink-0 text-zinc-400! hover:text-zinc-700! dark:hover:text-zinc-200!"
+            >
+              {theme === "dark" ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
+            </Button>
             <Button
               type="button"
               variant="ghost"

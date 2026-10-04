@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, type Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -27,3 +27,20 @@ export function getFirebaseAuth(): Auth {
 }
 
 export const googleProvider = new GoogleAuthProvider();
+
+/**
+ * Xin thêm scope Drive qua popup Google riêng (không đụng tới JWT backend của phiên đăng nhập chính) —
+ * trả về OAuth access token của ĐÚNG account user đang dùng, để upload thẳng lên Drive bằng chính
+ * account đó (xem app/unity-playworks). Token này chỉ sống trong phiên upload, không lưu lại.
+ */
+export async function loginWithGoogleDrive(): Promise<string | null> {
+  const provider = new GoogleAuthProvider();
+  provider.addScope("https://www.googleapis.com/auth/drive");
+  try {
+    const result = await signInWithPopup(getFirebaseAuth(), provider);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    return credential?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}

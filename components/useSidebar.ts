@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/context";
 import { routes } from "@/lib/routes";
+import { useThemeStore } from "@/lib/theme/store";
 
 export interface SidebarNavItem {
-  id: "games" | "media" | "all-games" | "admin";
+  id: "games" | "media" | "all-games" | "unity-playworks" | "admin";
   label: string;
   href: string;
 }
@@ -15,6 +16,7 @@ const NAV_ITEMS: SidebarNavItem[] = [
   { id: "games", label: "Creatives", href: routes.creatives },
   { id: "media", label: "Media", href: routes.media },
   { id: "all-games", label: "All Games", href: routes.allGames },
+  { id: "unity-playworks", label: "Unity Playworks", href: routes.unityPlayworks },
 ];
 
 const ADMIN_NAV_ITEM: SidebarNavItem = {
@@ -28,6 +30,7 @@ const COLLAPSE_STORAGE_KEY = "playable_sidebar_collapsed";
 
 export function useSidebar() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useThemeStore();
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
@@ -64,5 +67,5 @@ export function useSidebar() {
   const navItems =
     user?.role === "ADMIN" ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
 
-  return { user, navItems, isActive, handleLogout, collapsed, toggleCollapsed };
+  return { user, navItems, isActive, handleLogout, collapsed, toggleCollapsed, theme, toggleTheme };
 }

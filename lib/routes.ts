@@ -15,6 +15,7 @@ export const routes = {
   media: "/media",
 
   allGames: "/all-games",
+  unityPlayworks: "/unity-playworks",
   admin: "/admin",
 
   build: (buildId: string) => `/builds/${buildId}`,

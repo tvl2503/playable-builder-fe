@@ -3,6 +3,8 @@ export type { BreadcrumbItem } from "./Breadcrumb";
 export { default as Button } from "./Button";
 export { default as Card } from "./Card";
 export { default as Checkbox } from "./Checkbox";
+export { default as Combobox } from "./Combobox";
+export type { ComboboxOption } from "./Combobox";
 export { default as ColorInput } from "./ColorInput";
 export { ConfirmDialog } from "./ConfirmDialog";
 export { Dialog } from "./Dialog";

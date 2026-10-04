@@ -1,12 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { SWRConfig } from "swr";
 import { useAuthStore } from "@/lib/auth/store";
+import { useThemeStore } from "@/lib/theme/store";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     useAuthStore.getState().initialize();
+  }, []);
+
+  // useLayoutEffect (không phải useEffect): chạy trước paint, để kịp áp lại data-theme nếu Strict
+  // Mode (dev) đã reset <html> về attribute JSX quản lý lúc remount — xem lib/theme/store.ts.
+  useLayoutEffect(() => {
+    useThemeStore.getState().initialize();
   }, []);
 
   return (

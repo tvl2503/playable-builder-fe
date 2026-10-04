@@ -20,9 +20,8 @@ function LoginContent() {
     <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-orange-200 via-amber-100 to-orange-300 px-4">
       <Card variant="default" padding="lg" className="w-full max-w-md shadow-2xl">
         <div className="mb-8">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-orange-400 to-amber-500">
-            <span className="text-2xl font-bold text-white">P</span>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/favicon.ico" alt="" className="mx-auto mb-4 h-12 w-12 rounded-full" />
           <h1 className="mb-2 text-center text-3xl font-bold text-gray-900">Playable Builder</h1>
           <p className="text-center text-sm text-gray-600">Đăng nhập để tiếp tục</p>
         </div>

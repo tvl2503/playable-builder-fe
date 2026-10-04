@@ -52,9 +52,8 @@ export function Sidebar() {
         </Button>
 
         <div className={`flex items-center gap-2.5 p-5 ${collapsed ? "justify-center px-0" : ""}`}>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 text-sm font-bold text-white shadow-sm shadow-orange-900/20">
-            P
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/favicon.ico" alt="Playable Tool" className="h-9 w-9 shrink-0 rounded-full shadow-sm shadow-orange-900/20" />
           {!collapsed && <h1 className="truncate text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Playable Tool</h1>}
         </div>
 

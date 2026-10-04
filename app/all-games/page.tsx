@@ -51,7 +51,7 @@ export default function AllGamesPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">All Games</h1>
           <p className="mt-1 text-sm text-zinc-500">
             {filteredCatalog.length}
-            {search ? ` / ${totalCount}` : ""} game{totalCount !== 1 ? "s" : ""} của công ty — nguồn để chọn khi thêm game ở trang Games.
+            {search ? ` / ${totalCount}` : ""} game{totalCount !== 1 ? "s" : ""} — nguồn để chọn khi thêm game ở trang Games.
           </p>
         </div>
         {canManage && (

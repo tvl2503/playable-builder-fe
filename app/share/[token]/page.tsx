@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Card } from "@/components/common";
 import { resolveSharedPreviewLink, type ResolvedSharedPreview } from "@/lib/api";
 
@@ -5,8 +6,13 @@ import { resolveSharedPreviewLink, type ResolvedSharedPreview } from "@/lib/api"
  * Route public (không cần đăng nhập playable-tool — xem useAuthGate.ts's PUBLIC_ROUTE_PREFIXES) — nút
  * "Share" ở builds/[id] và variant editor tạo ra link dạng /share/<token>. Server Component: resolve
  * token ở server (không qua fetch()/CORS phía client) ra 1 presigned URL (đã vá sẵn config nếu là share
- * biến thể — xem SharedPreviewLinksService.resolve()), rồi nhúng thẳng vào <iframe src>. Trang
- * /share/[token] vẫn ở domain playable-tool, chỉ nội dung BÊN TRONG iframe tải từ domain storage.
+ * biến thể — xem SharedPreviewLinksService.resolve()), rồi redirect (307) THẲNG sang URL đó — người xem
+ * rời khỏi domain playable-tool, vào thẳng domain storage, tương đương hệt "mở thẳng link storage" (đã
+ * test không lag trên Safari). TẠM THỜI bỏ cách nhúng `<iframe>` cũ (giữ được domain playable-tool nhưng
+ * nghi là nguồn cơn 1 bubble di chuyển bằng rigidbody bị chậm trên Safari dù chạy đúng tốc độ khi mở thẳng
+ * link hoặc host ở nơi khác như edgeone.ai/drop) để kiểm chứng trên production thật — xem lại toàn bộ nếu
+ * xác nhận đây đúng là nguyên nhân (quay về iframe thì mất domain masking, phải đổi hướng khác, vd Service
+ * Worker proxy hoặc World Writable headers, không redirect thẳng như này).
  */
 export default async function SharePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -25,9 +31,5 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
     );
   }
 
-  return (
-    <div className="flex flex-1 flex-col bg-zinc-950">
-      <iframe src={resolved.url} title={resolved.buildName} sandbox="allow-scripts allow-same-origin" className="h-full w-full flex-1 border-0" />
-    </div>
-  );
+  redirect(resolved.url);
 }

@@ -55,10 +55,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   loginWithGoogle: async () => {
     const cred = await signInWithPopup(getFirebaseAuth(), googleProvider);
     const idToken = await cred.user.getIdToken();
-    const { accessToken: token, user } = await api.loginWithFirebase(idToken);
-    setTokenCookie(token);
-    const permissions = await fetchPermissions(token);
-    set({ user, accessToken: token, permissions });
+
+    try {
+      const { accessToken: token, user } = await api.loginWithFirebase(idToken);
+      setTokenCookie(token);
+      const permissions = await fetchPermissions(token);
+      set({ user, accessToken: token, permissions });
+    } catch (err) {
+      // Backend từ chối (vd sai domain email) -> popup Google đã đăng nhập xong phía Firebase rồi, phải
+      // tự đăng xuất lại ở đây, không thì cred.user vẫn còn "đăng nhập" lửng lơ dù app chưa có JWT nào.
+      await firebaseSignOut(getFirebaseAuth()).catch(() => {});
+      throw err;
+    }
   },
 
   logout: async () => {

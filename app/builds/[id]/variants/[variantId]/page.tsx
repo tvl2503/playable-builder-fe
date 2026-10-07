@@ -13,6 +13,7 @@ import {
 import { PageLoading, Spinner } from "@/components/Spinner";
 import { PlaygroundConfigForm } from "@/components/PlaygroundConfigForm";
 import DeviceFrame from "@/components/Preview/DeviceFrame";
+import EventLogOverlay from "@/components/Preview/EventLogOverlay";
 import { routes } from "@/lib/routes";
 
 import { useVariantEditorPage } from "./useVariantEditorPage";
@@ -280,6 +281,8 @@ export default function VariantEditorPage() {
               ref={previewContainerRef}
               className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden"
             >
+              <EventLogOverlay key={`${previewUrl}-${selectedDevice.id}-${rotated}`} />
+
               {/*
                 previewDevice đã hoán vị width/height khi rotated — canvas/iframe được cấp đúng kích
                 thước màn ngang thật ngay lập tức (không đợi animation). 2 lớp transform tách riêng:

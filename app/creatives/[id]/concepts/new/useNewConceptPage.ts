@@ -9,7 +9,7 @@ import { listPngImagesInZip, type ZipPngEntry } from "@/lib/cocos/zipPngPreview"
 import { swrKeys } from "@/lib/api/swr-keys";
 import { routes } from "@/lib/routes";
 
-export type PngMode = "off" | "palette" | "webp";
+export type PngMode = "off" | "palette" | "lossy" | "webp";
 
 interface PngImageState extends ZipPngEntry {
   compress: boolean;

@@ -213,7 +213,7 @@ export const api = {
     gameId: string,
     name: string,
     file: File,
-    options?: { pngMode?: "off" | "palette" | "webp"; noCompressPaths?: string[] },
+    options?: { pngMode?: "off" | "palette" | "lossy" | "webp"; noCompressPaths?: string[] },
   ) => {
     const form = new FormData();
     form.append("name", name);
@@ -227,7 +227,7 @@ export const api = {
     token: string,
     buildId: string,
     file: File,
-    options?: { pngMode?: "off" | "palette" | "webp"; noCompressPaths?: string[] },
+    options?: { pngMode?: "off" | "palette" | "lossy" | "webp"; noCompressPaths?: string[] },
   ) => {
     const form = new FormData();
     form.append("file", file);
@@ -355,28 +355,48 @@ export async function openOrDownloadArtifact(token: string, artifact: ApiBuildAr
  * biến thể) -> trả đúng file đó (html/zip); nhiều hơn -> server tự gộp hết vào 1 zip. `variantIds`: `""` =
  * "Mặc định (engine)", còn lại là id biến thể thật — khớp đúng kiểu `selectedVariantIds` ở
  * useBuildDetailPage.ts, không cần transform gì thêm trước khi gọi.
+ *
+ * KHÔNG fetch() rồi blob nữa (cách cũ: tải hết file vào bộ nhớ trước, không có progress gì, xong mới lưu
+ * gần như tức thì) — 2 bước: (1) xin 1 token tải ngắn hạn (60s, xem export-download-token.service.ts
+ * bên backend) qua fetch() có Authorization header như bình thường; (2) cho TRÌNH DUYỆT tự điều hướng
+ * thẳng tới URL tải kèm token đó — Chrome/Firefox/Safari tự nhận `Content-Disposition: attachment` và xử
+ * lý y hệt 1 download thật (hiện trong lịch sử download, có progress, resume được).
+ *
+ * Điều hướng bằng click 1 thẻ `<a target="_blank">`, KHÔNG dùng `<iframe hidden>` — đã thử iframe ẩn
+ * trước (không mở tab nào cả) nhưng Chrome coi download bắn ra từ iframe ẩn, không gắn trực tiếp với 1
+ * cú click thật của user, là "download tự động/âm thầm" và ÂM THẦM CHẶN LUÔN (không báo lỗi gì, trông y
+ * hệt như không có chuyện gì xảy ra) — đây là cơ chế chống fingerprint/malware tải file lén của Chrome,
+ * không phải bug ở code này. `<a target="_blank">` vẫn bị flash 1 tab trống trong chốc lát (tab tự đóng
+ * ngay khi response là `Content-Disposition: attachment`) nhưng không bị chặn, nên đánh đổi lấy độ tin
+ * cậy. Cũng KHÔNG dùng `window.location.href`/`window.open()`: `window.open()` sau 1 `await` dễ bị trình
+ * duyệt chặn như popup; `window.location.href` thì nếu server lỡ trả lỗi thay vì file sẽ mất luôn trang
+ * SPA hiện tại (điều hướng hẳn sang xem JSON lỗi) — click thẻ `<a>` tránh được cả 2 rủi ro này.
+ * Route tải (`builds/:id/export-download`, ExportDownloadController) không gắn được Authorization header
+ * qua điều hướng thường nên tự verify bằng token này thay vì JwtAuthGuard.
  */
 export async function exportBuild(token: string, buildId: string, networks: string[], variantIds: string[]): Promise<void> {
-  const params = new URLSearchParams({ networks: networks.join(","), variantIds: variantIds.join(",") });
-  const res = await fetch(`${API_URL}/builds/${buildId}/export?${params.toString()}`, {
+  const tokenRes = await fetch(`${API_URL}/builds/${buildId}/export-token`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.message || `Export thất bại (HTTP ${res.status})`);
+  if (!tokenRes.ok) {
+    const body = await tokenRes.json().catch(() => null);
+    throw new Error(body?.message || `Export thất bại (HTTP ${tokenRes.status})`);
   }
+  const { token: downloadToken } = (await tokenRes.json()) as { token: string };
 
-  const disposition = res.headers.get("Content-Disposition") || "";
-  const fileNameMatch = disposition.match(/filename="([^"]+)"/);
-  const fileName = fileNameMatch?.[1] || "export";
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
+  const params = new URLSearchParams({
+    networks: networks.join(","),
+    variantIds: variantIds.join(","),
+    token: downloadToken,
+  });
 
   const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
+  a.href = `${API_URL}/builds/${buildId}/export-download?${params.toString()}`;
+  a.target = "_blank";
+  a.rel = "noopener";
+  document.body.appendChild(a);
   a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  a.remove();
 }
 
 /** Mở tab mới xem bản single-html gốc đã vá config của 1 variant — dùng cho nút "Xem nhanh" ở danh sách biến thể. */

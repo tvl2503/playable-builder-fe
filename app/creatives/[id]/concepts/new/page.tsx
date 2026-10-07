@@ -15,6 +15,7 @@ export default function NewConceptPage() {
   const PNG_MODES: { value: PngMode; label: string }[] = [
     { value: "off", label: t("pngModeOff") },
     { value: "palette", label: t("pngModePalette") },
+    { value: "lossy", label: t("pngModeLossy") },
     { value: "webp", label: t("pngModeWebp") },
   ];
   const {

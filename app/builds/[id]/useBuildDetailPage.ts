@@ -12,7 +12,7 @@ import { routes } from "@/lib/routes";
 
 const POLL_INTERVAL_MS = 3000;
 
-export type ReuploadPngMode = "off" | "palette" | "webp";
+export type ReuploadPngMode = "off" | "palette" | "lossy" | "webp";
 export type ReuploadStep = "pick" | "previewing" | "diff" | "confirming";
 
 export function useBuildDetailPage() {

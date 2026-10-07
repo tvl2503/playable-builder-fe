@@ -73,6 +73,7 @@ export default function BuildDetailPage() {
   const REUPLOAD_PNG_MODES: { value: ReuploadPngMode; label: string }[] = [
     { value: "off", label: t("pngOff") },
     { value: "palette", label: t("pngPalette") },
+    { value: "lossy", label: t("pngLossy") },
     { value: "webp", label: t("pngWebp") },
   ];
   const DIFF_STATUS_LABEL: Record<"added" | "removed" | "changed", string> = {

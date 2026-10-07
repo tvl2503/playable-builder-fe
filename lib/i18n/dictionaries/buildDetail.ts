@@ -4,6 +4,7 @@ export const buildDetailDict = defineDict(
   {
     pngOff: "Off — keep original image",
     pngPalette: "Palette PNG — moderate compression, keeps PNG format",
+    pngLossy: "Lossy PNG — stronger compression (tinypng-like), keeps PNG format",
     pngWebp: "WebP — strongest compression, changes image format",
     diffAdded: "New",
     diffRemoved: "Removed",
@@ -63,6 +64,7 @@ export const buildDetailDict = defineDict(
   {
     pngOff: "Tắt — giữ nguyên ảnh gốc",
     pngPalette: "Palette PNG — nén vừa, giữ định dạng PNG",
+    pngLossy: "Lossy PNG — nén mạnh hơn (kiểu tinypng), giữ định dạng PNG",
     pngWebp: "WebP — nén mạnh nhất, đổi định dạng ảnh",
     diffAdded: "Mới",
     diffRemoved: "Bị xoá",

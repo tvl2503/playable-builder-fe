@@ -7,11 +7,13 @@ import { api, ApiMediaAsset, MediaKind } from "@/lib/api";
 import { can, canOnResource } from "@/lib/auth/permissions";
 import { swrKeys } from "@/lib/api/swr-keys";
 import { extensionForMimeType } from "@/lib/media/imageEdit";
+import { useT } from "@/lib/i18n/useT";
 
 export type MediaKindFilter = "all" | MediaKind;
 
 export function useMediaLibraryPage() {
   const session = useRequireAuth();
+  const t = useT("media");
 
   const { data: games } = useSWR(session ? swrKeys.games() : null, () => api.listGames(session!.accessToken));
 
@@ -54,7 +56,7 @@ export function useMediaLibraryPage() {
   const selectFiles = (files: FileList | File[]) => {
     const valid = Array.from(files).filter((f) => f.type.startsWith("image/") || f.type.startsWith("audio/"));
     if (valid.length === 0) {
-      setError("Chỉ nhận file ảnh hoặc audio");
+      setError(t("invalidFileType"));
       return;
     }
     setError(null);

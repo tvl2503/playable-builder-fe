@@ -13,15 +13,9 @@ const ICONS: Record<SidebarNavItem["id"], typeof GamesIcon> = {
   admin: ShieldIcon,
 };
 
-const ROLE_LABEL: Record<string, string> = {
-  ADMIN: "Admin",
-  DEVELOP: "Develop",
-  UA: "UA",
-  VIEWER: "Viewer",
-};
-
 export function Sidebar() {
-  const { user, navItems, isActive, handleLogout, collapsed, toggleCollapsed, theme, toggleTheme } = useSidebar();
+  const { user, navItems, isActive, handleLogout, collapsed, toggleCollapsed, theme, toggleTheme, locale, toggleLocale, roleLabel, t } =
+    useSidebar();
 
   const displayName = user?.name ?? "User";
   const email = user?.email ?? "";
@@ -43,7 +37,7 @@ export function Sidebar() {
           type="button"
           variant="ghost"
           onClick={toggleCollapsed}
-          title={collapsed ? "Mở rộng" : "Thu gọn"}
+          title={collapsed ? t("expand") : t("collapse")}
           // rounded-full!/p-0!: Button.tsx's baseStyles (rounded-lg) và sizeStyles (px-4 py-2) đứng sau
           // trong CSS build ra (Tailwind tự sắp theo nhóm utility, không theo thứ tự trong className) nên
           // thắng nếu không ép !important ở đây.
@@ -109,15 +103,25 @@ export function Sidebar() {
             {!collapsed && (
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{displayName}</p>
-                <p className="truncate text-xs text-zinc-500">{user ? (ROLE_LABEL[user.role] ?? user.role) : email}</p>
+                <p className="truncate text-xs text-zinc-500">{user ? roleLabel(user.role) : email}</p>
               </div>
             )}
             <Button
               type="button"
               variant="ghost"
               size="icon"
+              onClick={toggleLocale}
+              title={t("switchLanguage")}
+              className="shrink-0 text-[11px]! font-semibold text-zinc-400! hover:text-zinc-700! dark:hover:text-zinc-200!"
+            >
+              {locale.toUpperCase()}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
               onClick={toggleTheme}
-              title={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
+              title={theme === "dark" ? t("switchToLight") : t("switchToDark")}
               className="shrink-0 text-zinc-400! hover:text-zinc-700! dark:hover:text-zinc-200!"
             >
               {theme === "dark" ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
@@ -127,7 +131,7 @@ export function Sidebar() {
               variant="ghost"
               size="icon"
               onClick={() => handleLogout()}
-              title="Đăng xuất"
+              title={t("logout")}
               className="shrink-0 text-zinc-400! hover:text-zinc-700! dark:hover:text-zinc-200!"
             >
               <LogoutIcon />

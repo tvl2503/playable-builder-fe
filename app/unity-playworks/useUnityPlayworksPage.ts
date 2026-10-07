@@ -10,6 +10,7 @@ import { swrKeys } from "@/lib/api/swr-keys";
 import { LUNA_NETWORKS } from "@/constants/luna";
 import { buildDriveFolderStructure, extractFolderId, uploadFileToDrive } from "@/lib/drive/driveUpload";
 import { convertZipBlob, generateNameFile, getPALuna, groupFiles, handleChangeFile, LUNA_ZIP_NETWORKS } from "@/lib/luna/luna";
+import { useT } from "@/lib/i18n/useT";
 
 export interface UploadProgress {
   current: number;
@@ -18,6 +19,7 @@ export interface UploadProgress {
 }
 
 export function useUnityPlayworksPage() {
+  const t = useT("unityPlayworks");
   const session = useRequireAuth();
 
   const [gameId, setGameId] = useState("");
@@ -45,7 +47,7 @@ export function useUnityPlayworksPage() {
   const validateAndSetFile = (f: File): boolean => {
     const ext = f.name.slice(f.name.lastIndexOf(".")).toLowerCase();
     if (![".html", ".zip"].includes(ext)) {
-      setError("Chỉ chấp nhận file .html hoặc .zip");
+      setError(t("errorInvalidFileType"));
       return false;
     }
     setError(null);
@@ -97,26 +99,26 @@ export function useUnityPlayworksPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
-      setError("Vui lòng chọn file");
+      setError(t("errorChooseFile"));
       return;
     }
     if (!idea.trim()) {
-      setError("Vui lòng nhập idea");
+      setError(t("errorEnterIdea"));
       return;
     }
 
     const game = games.find((g) => g.id === gameId);
     if (!game) {
-      setError("Vui lòng chọn game");
+      setError(t("errorChooseGame"));
       return;
     }
     if (!game.driveUrl) {
-      setError("Game này chưa có link Drive. Vui lòng cập nhật trong trang All Games.");
+      setError(t("errorNoDriveLink"));
       return;
     }
     const gameFolderId = extractFolderId(game.driveUrl);
     if (!gameFolderId) {
-      setError("Link Drive của game không hợp lệ.");
+      setError(t("errorInvalidDriveLink"));
       return;
     }
 
@@ -127,7 +129,7 @@ export function useUnityPlayworksPage() {
     try {
       const token = await loginWithGoogleDrive();
       if (!token) {
-        setError("Không lấy được quyền truy cập Drive. Vui lòng thử lại.");
+        setError(t("errorDriveAccess"));
         return;
       }
 
@@ -153,10 +155,10 @@ export function useUnityPlayworksPage() {
         const htmlContent = await file.text();
         await uploadAllNetworks(token, htmlContent, paFolderId, paValue, nameGame);
       }
-      setSuccessMessage(`Đã upload xong lên Drive của ${nameGame}.`);
+      setSuccessMessage(t("successUploaded", { name: nameGame }));
       setFile(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Có lỗi xảy ra khi upload");
+      setError(err instanceof Error ? err.message : t("errorGeneric"));
     } finally {
       setIsUploading(false);
       setProgress(null);

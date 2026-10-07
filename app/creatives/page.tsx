@@ -6,10 +6,12 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageLoading, Spinner } from "@/components/Spinner";
 import { GameIcon } from "@/components/GameIcon";
 import { routes } from "@/lib/routes";
+import { useT } from "@/lib/i18n/useT";
 import { useGamesPage } from "./useGamesPage";
 
 export default function GamesPage() {
   const { session, games, error, canCreate } = useGamesPage();
+  const t = useT("gamesList");
 
   if (!session) return <PageLoading />;
 
@@ -17,8 +19,8 @@ export default function GamesPage() {
     <main className="flex w-full flex-1 flex-col gap-6 px-8 py-10">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Creatives</h1>
-          <p className="mt-1 text-sm text-zinc-500">Quản lý playable ads theo từng game.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t("title")}</h1>
+          <p className="mt-1 text-sm text-zinc-500">{t("subtitle")}</p>
         </div>
         {canCreate && (
           <Link
@@ -26,7 +28,7 @@ export default function GamesPage() {
             className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm shadow-orange-900/10 transition-colors hover:bg-primary-hover"
           >
             <PlusIcon className="h-4 w-4" />
-            Tạo game
+            {t("createGame")}
           </Link>
         )}
       </div>
@@ -43,12 +45,12 @@ export default function GamesPage() {
         {games && games.length === 0 && (
           <EmptyState
             icon={<GamesIcon className="h-10 w-10" />}
-            title="Chưa có game nào"
-            description="Tạo game đầu tiên để bắt đầu upload và quản lý playable ads."
+            title={t("noGamesTitle")}
+            description={t("noGamesDescription")}
             action={
               canCreate ? (
                 <Link href={routes.creativeNew} className="text-sm font-medium text-primary hover:underline">
-                  + Tạo game
+                  {t("createGameShort")}
                 </Link>
               ) : undefined
             }

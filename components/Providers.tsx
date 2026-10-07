@@ -4,10 +4,12 @@ import { useEffect, useLayoutEffect } from "react";
 import { SWRConfig } from "swr";
 import { useAuthStore } from "@/lib/auth/store";
 import { useThemeStore } from "@/lib/theme/store";
+import { useLocaleStore } from "@/lib/i18n/store";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     useAuthStore.getState().initialize();
+    useLocaleStore.getState().initialize();
   }, []);
 
   // useLayoutEffect (không phải useEffect): chạy trước paint, để kịp áp lại data-theme nếu Strict

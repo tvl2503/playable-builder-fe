@@ -17,6 +17,7 @@ import {
 import { can, canOnResource } from "@/lib/auth/permissions";
 import { swrKeys } from "@/lib/api/swr-keys";
 import { routes } from "@/lib/routes";
+import { useT } from "@/lib/i18n/useT";
 
 /** Debounce trước khi reload preview — gõ số/text không bị giật lại mỗi phím. */
 const PREVIEW_DEBOUNCE_MS = 500;
@@ -76,6 +77,7 @@ function configToOverrides(
 }
 
 export function useVariantEditorPage() {
+  const t = useT("variantEditor");
   const { id: buildId, variantId } = useParams<{
     id: string;
     variantId: string;
@@ -148,9 +150,7 @@ export function useVariantEditorPage() {
     const single = build.artifacts.find((a) => a.channelName === "single");
 
     if (build.status !== "SUCCESS" || !single) {
-      setLoadError(
-        "Concept chưa build xong hoặc không có bản single-html để preview.",
-      );
+      setLoadError(t("noPreviewAvailable"));
       return;
     }
 
@@ -170,7 +170,9 @@ export function useVariantEditorPage() {
     return () => {
       cancelled = true;
     };
-  }, [session, build, buildError, buildId]);
+    // `t` cố tình không đưa vào deps — đổi identity mỗi render (useT không memo theo locale), đưa vào
+    // sẽ làm effect fetch lại single-html mỗi lần re-render thay vì chỉ khi session/build/buildId đổi.
+  }, [session, build, buildError, buildId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Mỗi lần config đổi -> vá lại preview. Field @playgroundAsset lưu MediaAsset.id trong config (không
   // phải URL) — phải resolve id -> presigned URL (GET /media/:id) trước khi inject, vì __pgApplyAsset

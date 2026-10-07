@@ -36,13 +36,9 @@ import {
 } from "@/components/icons";
 import type { FieldDiffChange, FieldDiffEntry } from "@/lib/cocos/fieldsRegistryDiff";
 import { routes } from "@/lib/routes";
+import { useT } from "@/lib/i18n/useT";
+import { useLocaleStore } from "@/lib/i18n/store";
 import { useBuildDetailPage, type ReuploadPngMode } from "./useBuildDetailPage";
-
-const REUPLOAD_PNG_MODES: { value: ReuploadPngMode; label: string }[] = [
-  { value: "off", label: "Tắt — giữ nguyên ảnh gốc" },
-  { value: "palette", label: "Palette PNG — nén vừa, giữ định dạng PNG" },
-  { value: "webp", label: "WebP — nén mạnh nhất, đổi định dạng ảnh" },
-];
 
 const DIFF_STATUS_PILL: Record<"added" | "removed" | "changed", string> = {
   added:
@@ -51,27 +47,39 @@ const DIFF_STATUS_PILL: Record<"added" | "removed" | "changed", string> = {
   changed: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300",
 };
 
-const DIFF_STATUS_LABEL: Record<"added" | "removed" | "changed", string> = { added: "Mới", removed: "Bị xoá", changed: "Đổi kiểu" };
+type RenameTarget = { kind: "build" } | { kind: "variant"; id: string; name: string };
 
 function fieldDetail(entry: FieldDiffEntry): string {
   const { match } = entry;
   return match.kind === "asset" ? `asset${match.assetKind ? `: ${match.assetKind}` : ""}` : match.fieldType?.type ?? "?";
 }
 
-function changeDetail(change: FieldDiffChange): string {
+function changeDetail(change: FieldDiffChange, t: ReturnType<typeof useT<"buildDetail">>): string {
   const beforeType = change.before.fieldType?.type ?? change.before.kind;
   const afterType = change.after.fieldType?.type ?? change.after.kind;
   if (beforeType !== afterType) return `${beforeType} → ${afterType}`;
   const beforeSection = change.before.options.section ?? "—";
   const afterSection = change.after.options.section ?? "—";
-  if (beforeSection !== afterSection) return `Section: "${beforeSection}" → "${afterSection}"`;
-  return "Cấu hình thay đổi";
+  if (beforeSection !== afterSection) return t("sectionChange", { before: beforeSection, after: afterSection });
+  return t("configChanged");
 }
-
-type RenameTarget = { kind: "build" } | { kind: "variant"; id: string; name: string };
 
 export default function BuildDetailPage() {
   const router = useRouter();
+  const t = useT("buildDetail");
+  const tc = useT("common");
+  const locale = useLocaleStore((s) => s.locale);
+  const dateLocale = locale === "vi" ? "vi-VN" : "en-US";
+  const REUPLOAD_PNG_MODES: { value: ReuploadPngMode; label: string }[] = [
+    { value: "off", label: t("pngOff") },
+    { value: "palette", label: t("pngPalette") },
+    { value: "webp", label: t("pngWebp") },
+  ];
+  const DIFF_STATUS_LABEL: Record<"added" | "removed" | "changed", string> = {
+    added: t("diffAdded"),
+    removed: t("diffRemoved"),
+    changed: t("diffChanged"),
+  };
   const {
     session,
     buildId,
@@ -236,39 +244,39 @@ export default function BuildDetailPage() {
                 size="icon"
                 onClick={() => setRenameTarget({ kind: "build" })}
                 className="text-zinc-400! hover:bg-zinc-100! hover:text-zinc-700! dark:hover:bg-zinc-800! dark:hover:text-zinc-200!"
-                title="Đổi tên concept"
+                title={t("renameConcept")}
               >
                 <EditIcon className="h-4 w-4" />
               </Button>
             )}
           </div>
           <p className="mt-1 text-xs text-zinc-500">
-            {build.engineVersion} · Cập nhật {new Date(build.updatedAt).toLocaleString("vi-VN")}
+            {build.engineVersion} · {t("updatedAt", { date: new Date(build.updatedAt).toLocaleString(dateLocale) })}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {canCreateConcept && (
             <Button variant="secondary" size="sm" onClick={handleDuplicateBuild} loading={duplicatingBuild}>
               <DuplicateIcon className="h-4 w-4" />
-              Nhân bản
+              {t("duplicate")}
             </Button>
           )}
           {canEditThisBuild && (
             <Button variant="secondary" size="sm" onClick={openMoveDialog}>
               <MoveIcon className="h-4 w-4" />
-              Chuyển game
+              {t("moveGame")}
             </Button>
           )}
           {canEditThisBuild && (
             <Button variant="secondary" size="sm" onClick={openReuploadDialog}>
               <UploadCloudIcon className="h-4 w-4" />
-              Upload lại
+              {t("reupload")}
             </Button>
           )}
           {canDeleteThisBuild && (
             <Button variant="danger" size="sm" onClick={() => setConfirmDeleteBuild(true)} loading={deletingBuild}>
               <TrashIcon className="h-4 w-4" />
-              Xoá concept
+              {t("deleteConcept")}
             </Button>
           )}
         </div>
@@ -278,7 +286,7 @@ export default function BuildDetailPage() {
         {build.status === "PROCESSING" || build.status === "PENDING" ? (
           <Card className="flex items-center gap-3">
             <Spinner className="h-5 w-5" />
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Đang build concept này, trang sẽ tự cập nhật khi xong...</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("buildingNotice")}</p>
           </Card>
         ) : null}
 
@@ -292,15 +300,15 @@ export default function BuildDetailPage() {
           <Card className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <RocketIcon className="h-5 w-5 text-primary" />
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Export cho ad network</h2>
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{t("exportHeading")}</h2>
             </div>
 
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-zinc-500">Dùng config của (gộp chung vào 1 lần export)</span>
+                <span className="text-xs font-medium text-zinc-500">{t("useConfigOf")}</span>
                 <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                   <Checkbox className="h-3.5 w-3.5" checked={allVariantsSelected} onChange={toggleAllVariants} />
-                  Chọn tất cả
+                  {t("selectAll")}
                 </label>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -321,10 +329,10 @@ export default function BuildDetailPage() {
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-zinc-500">Ad network</span>
+              <span className="text-xs font-medium text-zinc-500">{t("adNetwork")}</span>
               <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 <Checkbox className="h-3.5 w-3.5" checked={allNetworksSelected} onChange={toggleAllNetworks} />
-                Chọn tất cả
+                {t("selectAll")}
               </label>
             </div>
 
@@ -355,8 +363,8 @@ export default function BuildDetailPage() {
               className="self-start"
             >
               {exporting
-                ? "Đang build..."
-                : `Export (${selectedNetworks.length || 0} network × ${selectedVariantIds.length || 0} config)`}
+                ? t("building")
+                : t("exportButton", { networks: selectedNetworks.length || 0, variants: selectedVariantIds.length || 0 })}
             </Button>
           </Card>
         )}
@@ -365,7 +373,7 @@ export default function BuildDetailPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <LayersIcon className="h-5 w-5 text-zinc-400" />
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Biến thể</h2>
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{t("variantsHeading")}</h2>
             </div>
             {canCreateVariant && build.status === "SUCCESS" && (
               <Link
@@ -373,7 +381,7 @@ export default function BuildDetailPage() {
                 className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm shadow-orange-900/10 hover:bg-primary-hover"
               >
                 <PlusIcon className="h-3.5 w-3.5" />
-                Biến thể
+                {t("variantLink")}
               </Link>
             )}
           </div>
@@ -385,11 +393,7 @@ export default function BuildDetailPage() {
           )}
 
           {variants && variants.length === 0 && (
-            <EmptyState
-              icon={<LayersIcon className="h-8 w-8" />}
-              title="Chưa có biến thể nào"
-              description="Tạo biến thể để thử nhiều bộ config khác nhau trên cùng concept này."
-            />
+            <EmptyState icon={<LayersIcon className="h-8 w-8" />} title={t("noVariantsTitle")} description={t("noVariantsDescription")} />
           )}
 
           {variants && variants.length > 0 && (
@@ -397,10 +401,10 @@ export default function BuildDetailPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Tên</TableHead>
-                    <TableHead>Người tạo</TableHead>
-                    <TableHead>Cập nhật</TableHead>
-                    <TableHead>Share</TableHead>
+                    <TableHead>{t("colName")}</TableHead>
+                    <TableHead>{t("colCreator")}</TableHead>
+                    <TableHead>{t("colUpdated")}</TableHead>
+                    <TableHead>{t("colShare")}</TableHead>
                     <TableHead align="right" />
                   </TableRow>
                 </TableHeader>
@@ -415,7 +419,7 @@ export default function BuildDetailPage() {
                         <span className="font-medium text-zinc-900 dark:text-zinc-50">{variant.name}</span>
                       </TableCell>
                       <TableCell className="text-xs text-zinc-500">{variant.createdBy.name || variant.createdBy.email}</TableCell>
-                      <TableCell className="text-xs text-zinc-500">{new Date(variant.updatedAt).toLocaleString("vi-VN")}</TableCell>
+                      <TableCell className="text-xs text-zinc-500">{new Date(variant.updatedAt).toLocaleString(dateLocale)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <Button
                           type="button"
@@ -424,7 +428,7 @@ export default function BuildDetailPage() {
                           onClick={() => handleCopyVariantShareLink(variant)}
                           loading={copyingVariantId === variant.id}
                         >
-                          {copiedVariantId === variant.id ? "Đã copy" : "Copy link"}
+                          {copiedVariantId === variant.id ? tc("copied") : t("copyLink")}
                         </Button>
                       </TableCell>
                       <TableCell align="right" onClick={(e) => e.stopPropagation()}>
@@ -437,7 +441,7 @@ export default function BuildDetailPage() {
                               onClick={() => handleDuplicateVariant(variant.id)}
                               disabled={duplicatingVariantId === variant.id}
                               className="text-zinc-400! hover:bg-zinc-100! hover:text-zinc-700! dark:hover:bg-zinc-800! dark:hover:text-zinc-200!"
-                              title="Nhân bản biến thể"
+                              title={t("duplicateVariantTitle")}
                             >
                               {duplicatingVariantId === variant.id ? <Spinner className="h-4 w-4" /> : <DuplicateIcon className="h-4 w-4" />}
                             </Button>
@@ -449,7 +453,7 @@ export default function BuildDetailPage() {
                               size="icon"
                               onClick={() => setRenameTarget({ kind: "variant", id: variant.id, name: variant.name })}
                               className="text-zinc-400! hover:bg-zinc-100! hover:text-zinc-700! dark:hover:bg-zinc-800! dark:hover:text-zinc-200!"
-                              title="Đổi tên biến thể"
+                              title={t("renameVariantTitle")}
                             >
                               <EditIcon className="h-4 w-4" />
                             </Button>
@@ -462,7 +466,7 @@ export default function BuildDetailPage() {
                               onClick={() => setDeleteVariantTarget({ id: variant.id, name: variant.name })}
                               disabled={deletingVariantId === variant.id}
                               className="text-zinc-400! hover:bg-red-50! hover:text-red-600! dark:hover:bg-red-950/40! dark:hover:text-red-400!"
-                              title="Xoá biến thể"
+                              title={t("deleteVariantTitle")}
                             >
                               {deletingVariantId === variant.id ? <Spinner className="h-4 w-4" /> : <TrashIcon className="h-4 w-4" />}
                             </Button>
@@ -483,8 +487,8 @@ export default function BuildDetailPage() {
       <PromptDialog
         open={renameTarget !== null}
         onOpenChange={(open) => !open && setRenameTarget(null)}
-        title={renameTarget?.kind === "build" ? "Đổi tên concept" : "Đổi tên biến thể"}
-        label={renameTarget?.kind === "build" ? "Tên concept" : "Tên biến thể"}
+        title={renameTarget?.kind === "build" ? t("renameConcept") : t("renameVariantTitle")}
+        label={renameTarget?.kind === "build" ? t("conceptNameLabel") : t("variantNameLabel")}
         initialValue={renameTarget?.kind === "build" ? build.name : (renameTarget?.name ?? "")}
         onSubmit={handleRenameSubmit}
       />
@@ -492,9 +496,9 @@ export default function BuildDetailPage() {
       <ConfirmDialog
         open={confirmDeleteBuild}
         onOpenChange={setConfirmDeleteBuild}
-        title="Xoá concept"
-        description={`Xoá concept "${build.name}"? Mọi biến thể và bản build của nó cũng sẽ bị xoá.`}
-        confirmLabel="Xoá concept"
+        title={t("deleteConcept")}
+        description={t("deleteConceptConfirm", { name: build.name })}
+        confirmLabel={t("deleteConcept")}
         danger
         onConfirm={handleDeleteBuild}
       />
@@ -502,19 +506,19 @@ export default function BuildDetailPage() {
       <ConfirmDialog
         open={deleteVariantTarget !== null}
         onOpenChange={(open) => !open && setDeleteVariantTarget(null)}
-        title="Xoá biến thể"
-        description={`Xoá biến thể "${deleteVariantTarget?.name}"?`}
-        confirmLabel="Xoá biến thể"
+        title={t("deleteVariantTitle")}
+        description={t("deleteVariantConfirm", { name: deleteVariantTarget?.name ?? "" })}
+        confirmLabel={t("deleteVariantTitle")}
         danger
         onConfirm={() => handleDeleteVariant(deleteVariantTarget!.id)}
       />
 
-      <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen} title="Chuyển concept sang game khác">
+      <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen} title={t("moveToOtherGame")}>
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Game đích</span>
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("targetGame")}</span>
             <Select value={moveTargetGameId} onChange={(e) => setMoveTargetGameId(e.target.value)}>
-              <option value="">Chọn game...</option>
+              <option value="">{t("chooseGame")}</option>
               {games
                 .filter((g) => g.id !== build.gameId)
                 .map((g) => (
@@ -528,20 +532,18 @@ export default function BuildDetailPage() {
           {moveError && <p className="text-sm text-red-600 dark:text-red-400">{moveError}</p>}
 
           <Button type="button" onClick={handleMoveSubmit} disabled={!moveTargetGameId} loading={moving} className="self-start">
-            Chuyển concept
+            {t("moveConcept")}
           </Button>
         </div>
       </Dialog>
 
-      <Dialog open={reuploadDialogOpen} onOpenChange={handleReuploadDialogOpenChange} title="Upload lại — đè lên concept này" size="lg">
+      <Dialog open={reuploadDialogOpen} onOpenChange={handleReuploadDialogOpenChange} title={t("reuploadTitle")} size="lg">
         {reuploadStep === "pick" && (
           <div className="flex flex-col gap-4">
-            <p className="text-xs text-zinc-500">
-              Chọn zip web-mobile mới. Concept giữ nguyên tên/id — biến thể và link Share hiện có vẫn dùng được sau khi đè.
-            </p>
+            <p className="text-xs text-zinc-500">{t("reuploadDescription")}</p>
             <label className="flex flex-col gap-2 text-sm">
               <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                File .zip của thư mục build <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs dark:bg-zinc-800">web-mobile</code>
+                {t("zipFileLabel")} <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs dark:bg-zinc-800">web-mobile</code>
               </span>
               <label
                 onDragOver={(e) => {
@@ -568,14 +570,20 @@ export default function BuildDetailPage() {
               >
                 <UploadCloudIcon className={`h-7 w-7 ${reuploadFile ? "text-primary" : "text-zinc-400"}`} />
                 <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {reuploadFile ? reuploadFile.name : <>Kéo thả hoặc <span className="font-medium text-primary">chọn file</span></>}
+                  {reuploadFile ? (
+                    reuploadFile.name
+                  ) : (
+                    <>
+                      {t("dragDropPrefix")} <span className="font-medium text-primary">{t("chooseFile")}</span>
+                    </>
+                  )}
                 </span>
                 <Input type="file" accept=".zip" onChange={(e) => setReuploadFile(e.target.files?.[0] ?? null)} className="hidden" />
               </label>
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Nén ảnh</span>
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("imageCompression")}</span>
               <Select value={reuploadPngMode} onChange={(e) => setReuploadPngMode(e.target.value as ReuploadPngMode)}>
                 {REUPLOAD_PNG_MODES.map((m) => (
                   <option key={m.value} value={m.value}>
@@ -588,7 +596,7 @@ export default function BuildDetailPage() {
             {reuploadError && <p className="text-sm text-red-600 dark:text-red-400">{reuploadError}</p>}
 
             <Button type="button" onClick={handlePreviewReupload} disabled={!reuploadFile} className="self-start">
-              Xem thay đổi
+              {t("viewChanges")}
             </Button>
           </div>
         )}
@@ -596,22 +604,22 @@ export default function BuildDetailPage() {
         {reuploadStep === "previewing" && (
           <div className="flex items-center gap-2 text-sm text-zinc-500">
             <Spinner className="h-4 w-4" />
-            Đang tải lên và quét config...
+            {t("uploadingAndScanning")}
           </div>
         )}
 
         {reuploadStep === "diff" && reuploadDiff && (
           <div className="flex flex-col gap-4">
             {reuploadDiff.added.length === 0 && reuploadDiff.removed.length === 0 && reuploadDiff.changed.length === 0 ? (
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">Không có thay đổi nào về config so với bản hiện tại.</p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("noConfigChanges")}</p>
             ) : (
               <div className="max-h-[45vh] overflow-y-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead>Field</TableHead>
-                      <TableHead>Chi tiết</TableHead>
+                      <TableHead>{t("colStatus")}</TableHead>
+                      <TableHead>{t("colField")}</TableHead>
+                      <TableHead>{t("colDetail")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -638,7 +646,7 @@ export default function BuildDetailPage() {
                         <TableCell className="px-3 font-mono text-xs">
                           {change.className}.{change.propName}
                         </TableCell>
-                        <TableCell className="px-3 text-xs text-zinc-500">{changeDetail(change)}</TableCell>
+                        <TableCell className="px-3 text-xs text-zinc-500">{changeDetail(change, t)}</TableCell>
                       </TableRow>
                     ))}
                     {reuploadDiff.removed.map((entry) => {
@@ -657,7 +665,7 @@ export default function BuildDetailPage() {
                             {fieldDetail(entry)}
                             {affected && (
                               <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
-                                Biến thể đang dùng: {affected.variantNames.join(", ")} — override field này sẽ hết tác dụng sau khi đè.
+                                {t("affectedVariantsNote", { names: affected.variantNames.join(", ") })}
                               </p>
                             )}
                           </TableCell>
@@ -673,10 +681,10 @@ export default function BuildDetailPage() {
 
             <div className="flex justify-end gap-2">
               <Button type="button" variant="secondary" size="sm" onClick={handleCancelReupload}>
-                Huỷ
+                {tc("cancel")}
               </Button>
               <Button type="button" variant="danger" size="sm" onClick={handleConfirmReupload}>
-                Xác nhận đè bản build mới
+                {t("confirmOverwrite")}
               </Button>
             </div>
           </div>
@@ -685,7 +693,7 @@ export default function BuildDetailPage() {
         {reuploadStep === "confirming" && (
           <div className="flex items-center gap-2 text-sm text-zinc-500">
             <Spinner className="h-4 w-4" />
-            Đang xác nhận...
+            {t("confirming")}
           </div>
         )}
       </Dialog>

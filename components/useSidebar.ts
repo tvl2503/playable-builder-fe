@@ -5,6 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/context";
 import { routes } from "@/lib/routes";
 import { useThemeStore } from "@/lib/theme/store";
+import { useLocaleStore } from "@/lib/i18n/store";
+import { useT } from "@/lib/i18n/useT";
+import type { Locale } from "@/lib/i18n/types";
 
 export interface SidebarNavItem {
   id: "games" | "media" | "all-games" | "unity-playworks" | "admin";
@@ -12,25 +15,14 @@ export interface SidebarNavItem {
   href: string;
 }
 
-const NAV_ITEMS: SidebarNavItem[] = [
-  { id: "games", label: "Creatives", href: routes.creatives },
-  { id: "media", label: "Media", href: routes.media },
-  { id: "all-games", label: "All Games", href: routes.allGames },
-  { id: "unity-playworks", label: "Unity Playworks", href: routes.unityPlayworks },
-];
-
-const ADMIN_NAV_ITEM: SidebarNavItem = {
-  id: "admin",
-  label: "Admin",
-  href: routes.admin,
-};
-
 /** Riêng của trình duyệt người dùng đó, không cần đồng bộ server — localStorage là đủ. */
 const COLLAPSE_STORAGE_KEY = "playable_sidebar_collapsed";
 
 export function useSidebar() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useThemeStore();
+  const { locale, setLocale } = useLocaleStore();
+  const t = useT("sidebar");
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
@@ -56,6 +48,11 @@ export function useSidebar() {
     });
   };
 
+  const toggleLocale = () => {
+    const next: Locale = locale === "en" ? "vi" : "en";
+    setLocale(next);
+  };
+
   const isActive = (href: string): boolean =>
     href === routes.home ? pathname === routes.home : pathname.startsWith(href);
 
@@ -64,8 +61,41 @@ export function useSidebar() {
     router.replace(routes.login);
   };
 
-  const navItems =
-    user?.role === "ADMIN" ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
+  const navItems: SidebarNavItem[] = [
+    { id: "games", label: t("navCreatives"), href: routes.creatives },
+    { id: "media", label: t("navMedia"), href: routes.media },
+    { id: "all-games", label: t("navAllGames"), href: routes.allGames },
+    { id: "unity-playworks", label: t("navUnityPlayworks"), href: routes.unityPlayworks },
+    ...(user?.role === "ADMIN" ? [{ id: "admin" as const, label: t("navAdmin"), href: routes.admin }] : []),
+  ];
 
-  return { user, navItems, isActive, handleLogout, collapsed, toggleCollapsed, theme, toggleTheme };
+  const roleLabel = (role: string): string => {
+    switch (role) {
+      case "ADMIN":
+        return t("roleAdmin");
+      case "DEVELOP":
+        return t("roleDevelop");
+      case "UA":
+        return t("roleUa");
+      case "VIEWER":
+        return t("roleViewer");
+      default:
+        return role;
+    }
+  };
+
+  return {
+    user,
+    navItems,
+    isActive,
+    handleLogout,
+    collapsed,
+    toggleCollapsed,
+    theme,
+    toggleTheme,
+    locale,
+    toggleLocale,
+    roleLabel,
+    t,
+  };
 }

@@ -1,4 +1,5 @@
 import type { BuildStatus } from "@/lib/api";
+import { useT } from "@/lib/i18n/useT";
 
 const STATUS_STYLE: Record<BuildStatus, string> = {
   PENDING: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
@@ -14,18 +15,20 @@ const DOT_STYLE: Record<BuildStatus, string> = {
   FAILED: "bg-red-500",
 };
 
-const STATUS_LABEL: Record<BuildStatus, string> = {
-  PENDING: "Đang chờ",
-  PROCESSING: "Đang build",
-  SUCCESS: "Sẵn sàng",
-  FAILED: "Lỗi",
+const STATUS_KEY: Record<BuildStatus, "statusPending" | "statusProcessing" | "statusSuccess" | "statusFailed"> = {
+  PENDING: "statusPending",
+  PROCESSING: "statusProcessing",
+  SUCCESS: "statusSuccess",
+  FAILED: "statusFailed",
 };
 
 export function StatusBadge({ status }: { status: BuildStatus }) {
+  const t = useT("common");
+
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLE[status]}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${DOT_STYLE[status]}`} />
-      {STATUS_LABEL[status]}
+      {t(STATUS_KEY[status])}
     </span>
   );
 }

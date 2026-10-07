@@ -5,6 +5,7 @@ import { Button, Card, Checkbox, Input, Table, TableHeader, TableBody, TableRow,
 import { PageLoading, Spinner } from "@/components/Spinner";
 import { EmptyState } from "@/components/EmptyState";
 import { AndroidIcon, AppleIcon, DriveIcon, EditIcon, GamesIcon, GithubIcon, PlusIcon, TrashIcon } from "@/components/icons";
+import { useT } from "@/lib/i18n/useT";
 import { useAllGamesPage } from "./useAllGamesPage";
 
 const CHECK_COLUMNS = [
@@ -16,6 +17,8 @@ const CHECK_COLUMNS = [
 ] as const;
 
 export default function AllGamesPage() {
+  const t = useT("allGames");
+  const tc = useT("common");
   const {
     session,
     isLoading,
@@ -51,27 +54,27 @@ export default function AllGamesPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">All Games</h1>
           <p className="mt-1 text-sm text-zinc-500">
             {filteredCatalog.length}
-            {search ? ` / ${totalCount}` : ""} game{totalCount !== 1 ? "s" : ""} — nguồn để chọn khi thêm game ở trang Games.
+            {search ? ` / ${totalCount}` : ""} game{totalCount !== 1 ? "s" : ""} — {t("gameCountSuffix")}
           </p>
         </div>
         {canManage && (
           <Button type="button" onClick={openAdd}>
             <PlusIcon className="h-4 w-4" />
-            Thêm game
+            {t("addGame")}
           </Button>
         )}
       </div>
 
       <div className="flex flex-col gap-4">
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo tên hoặc package name..." className="max-w-sm" />
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchPlaceholder")} className="max-w-sm" />
 
         {listError && <p className="text-sm text-red-600 dark:text-red-400">{listError}</p>}
 
         {filteredCatalog.length === 0 && (
           <EmptyState
             icon={<GamesIcon className="h-10 w-10" />}
-            title={search ? "Không tìm thấy game nào" : "Chưa có game nào"}
-            description={search ? "Thử từ khoá khác." : canManage ? 'Bấm "Thêm game" để bắt đầu.' : undefined}
+            title={search ? t("notFoundTitle") : t("emptyTitle")}
+            description={search ? t("notFoundHint") : canManage ? t("emptyHint") : undefined}
           />
         )}
 
@@ -81,15 +84,15 @@ export default function AllGamesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
-                  <TableHead className="w-12">Icon</TableHead>
-                  <TableHead>Game</TableHead>
+                  <TableHead className="w-12">{t("colIcon")}</TableHead>
+                  <TableHead>{t("colGame")}</TableHead>
                   {CHECK_COLUMNS.map((c) => (
                     <TableHead key={c.key} align="center" className="w-20">
                       {c.label}
                     </TableHead>
                   ))}
                   <TableHead align="center" className="w-24">
-                    Trạng thái
+                    {t("colStatus")}
                   </TableHead>
                   {(canManage || canDelete) && <TableHead align="right" className="w-20" />}
                 </TableRow>
@@ -145,7 +148,7 @@ export default function AllGamesPage() {
                             : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
                         }`}
                       >
-                        {entry.inhouse ? "Inhouse" : "Publish"}
+                        {entry.inhouse ? t("inhouse") : t("publish")}
                       </span>
                     </TableCell>
                     {(canManage || canDelete) && (
@@ -156,7 +159,7 @@ export default function AllGamesPage() {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              title="Sửa"
+                              title={t("editTitle")}
                               onClick={() => openEdit(entry)}
                               className="text-zinc-400! hover:bg-zinc-100! hover:text-primary! dark:hover:bg-zinc-800!"
                             >
@@ -168,7 +171,7 @@ export default function AllGamesPage() {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              title="Xoá"
+                              title={t("deleteTitle")}
                               onClick={() => handleDelete(entry)}
                               className="text-zinc-400! hover:bg-red-50! hover:text-red-600! dark:hover:bg-red-950/40!"
                             >
@@ -191,7 +194,7 @@ export default function AllGamesPage() {
           <RadixDialog.Overlay className="fixed inset-0 z-50 bg-zinc-950/50 backdrop-blur-sm" />
           <RadixDialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl shadow-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900">
             <RadixDialog.Title className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-              {editingId ? "Sửa game" : "Thêm game"}
+              {editingId ? t("editGameTitle") : t("addGameTitle")}
             </RadixDialog.Title>
 
             <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
@@ -212,7 +215,7 @@ export default function AllGamesPage() {
                   )}
                 </div>
                 <label className="flex flex-1 flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Link Google Play</span>
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("playStoreLinkLabel")}</span>
                   <Input
                     type="url"
                     value={form.androidUrl}
@@ -220,18 +223,18 @@ export default function AllGamesPage() {
                     onBlur={(e) => fetchIconFromAndroidUrl(e.target.value)}
                     placeholder="https://play.google.com/store/apps/details?id=..."
                   />
-                  <span className="text-xs text-zinc-400">Dán link Play Store để tự lấy package name + icon.</span>
+                  <span className="text-xs text-zinc-400">{t("playStoreLinkHint")}</span>
                 </label>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Tên game *</span>
-                  <Input required value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="vd: Brick Jam" />
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("nameLabel")}</span>
+                  <Input required value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder={t("namePlaceholder")} />
                 </label>
 
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Package name *</span>
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("packageNameLabel")}</span>
                   <Input
                     required
                     value={form.packageName}
@@ -242,12 +245,12 @@ export default function AllGamesPage() {
                 </label>
 
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Short name</span>
-                  <Input value={form.shortName} onChange={(e) => setField("shortName", e.target.value)} placeholder="vd: Brick" />
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("shortNameLabel")}</span>
+                  <Input value={form.shortName} onChange={(e) => setField("shortName", e.target.value)} placeholder={t("shortNamePlaceholder")} />
                 </label>
 
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Priority</span>
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("priorityLabel")}</span>
                   <Input
                     type="number"
                     value={form.priority ?? ""}
@@ -256,22 +259,22 @@ export default function AllGamesPage() {
                 </label>
 
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Link iOS (App Store)</span>
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("iosLinkLabel")}</span>
                   <Input type="url" value={form.iosUrl} onChange={(e) => setField("iosUrl", e.target.value)} placeholder="https://apps.apple.com/app/..." />
                 </label>
 
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Link Drive</span>
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("driveLinkLabel")}</span>
                   <Input type="url" value={form.driveUrl} onChange={(e) => setField("driveUrl", e.target.value)} placeholder="https://drive.google.com/..." />
                 </label>
 
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Github Playable</span>
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("githubPlayableLabel")}</span>
                   <Input value={form.githubPlayableUrl} onChange={(e) => setField("githubPlayableUrl", e.target.value)} placeholder="https://github.com/..." />
                 </label>
 
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Github Product</span>
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("githubProductLabel")}</span>
                   <Input value={form.githubProductUrl} onChange={(e) => setField("githubProductUrl", e.target.value)} placeholder="https://github.com/..." />
                 </label>
               </div>
@@ -282,7 +285,7 @@ export default function AllGamesPage() {
                   onChange={(e) => setField("inhouse", e.target.checked)}
                   className="h-3.5! w-3.5!"
                 />
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">Inhouse</span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("inhouseCheckbox")}</span>
               </label>
 
               {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -290,11 +293,11 @@ export default function AllGamesPage() {
               <div className="mt-2 flex justify-end gap-2">
                 <RadixDialog.Close asChild>
                   <Button type="button" variant="secondary">
-                    Huỷ
+                    {tc("cancel")}
                   </Button>
                 </RadixDialog.Close>
                 <Button type="submit" loading={submitting}>
-                  {submitting ? "Đang lưu..." : editingId ? "Lưu thay đổi" : "Thêm vào All Games"}
+                  {submitting ? tc("saving") : editingId ? t("saveChanges") : t("addToAllGames")}
                 </Button>
               </div>
             </form>

@@ -5,15 +5,18 @@ import { DriveIcon, ExternalLinkIcon, LayersIcon, ShieldIcon, TrashIcon, UnityIc
 import { PageLoading } from "@/components/Spinner";
 import { formatBytes } from "@/lib/format";
 import { LOCALIZE_OPTIONS } from "@/constants/luna";
+import { useT } from "@/lib/i18n/useT";
 import { useUnityPlayworksPage } from "./useUnityPlayworksPage";
 
-const FEATURES = [
-  { Icon: LayersIcon, title: "Multi-network", desc: "1 file export ra đủ AppLovin, Facebook, Google, Mintegral, TikTok, IronSource, Unity" },
-  { Icon: DriveIcon, title: "Tự sắp xếp thư mục", desc: "Drive game → năm → tháng → ngày-idea → phương án, không cần tạo tay" },
-  { Icon: ShieldIcon, title: "Dùng account của bạn", desc: "Upload bằng chính Google account đang đăng nhập, không qua tài khoản chung" },
-];
-
 export default function UnityPlayworksPage() {
+  const t = useT("unityPlayworks");
+
+  const FEATURES = [
+    { Icon: LayersIcon, title: t("featureMultiNetworkTitle"), desc: t("featureMultiNetworkDesc") },
+    { Icon: DriveIcon, title: t("featureAutoFolderTitle"), desc: t("featureAutoFolderDesc") },
+    { Icon: ShieldIcon, title: t("featureOwnAccountTitle"), desc: t("featureOwnAccountDesc") },
+  ];
+
   const {
     session,
     games,
@@ -51,10 +54,8 @@ export default function UnityPlayworksPage() {
             <UnityIcon className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Unity Playworks</h1>
-            <p className="mx-auto mt-1.5 max-w-md text-sm text-zinc-500">
-              Convert file export Luna theo từng ad network rồi upload thẳng lên Google Drive.
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{t("heading")}</h1>
+            <p className="mx-auto mt-1.5 max-w-md text-sm text-zinc-500">{t("subheading")}</p>
           </div>
         </div>
 
@@ -99,13 +100,11 @@ export default function UnityPlayworksPage() {
                     className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary-hover"
                   >
                     <DriveIcon className="h-3.5 w-3.5" />
-                    Mở thư mục Drive
+                    {t("openDriveFolder")}
                     <ExternalLinkIcon className="h-3 w-3" />
                   </a>
                 ) : (
-                  <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                    Game chưa có link Drive — cập nhật ở trang All Games.
-                  </p>
+                  <p className="text-xs font-medium text-amber-600 dark:text-amber-400">{t("noDriveLink")}</p>
                 )}
               </Card>
             )}
@@ -115,10 +114,10 @@ export default function UnityPlayworksPage() {
           <form onSubmit={handleSubmit}>
             <Card padding="lg" className="flex w-full flex-col gap-5">
               <label className="flex flex-col gap-1.5 text-sm">
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">Chọn game *</span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("selectGameLabel")}</span>
                 <Combobox
-                  placeholder="Tìm game theo tên hoặc package..."
-                  emptyText="Không tìm thấy game"
+                  placeholder={t("selectGamePlaceholder")}
+                  emptyText={t("selectGameEmpty")}
                   value={gameId}
                   onChange={setGameId}
                   options={games.map((g) => ({
@@ -132,24 +131,24 @@ export default function UnityPlayworksPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Idea *</span>
-                  <Input required value={idea} onChange={(e) => setIdea(e.target.value)} placeholder="Tên idea" />
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("ideaLabel")}</span>
+                  <Input required value={idea} onChange={(e) => setIdea(e.target.value)} placeholder={t("ideaPlaceholder")} />
                 </label>
 
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Phương án</span>
-                  <Input value={pa} onChange={(e) => setPa(e.target.value)} placeholder="Tên phương án" disabled={isGetPaLuna} />
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("paLabel")}</span>
+                  <Input value={pa} onChange={(e) => setPa(e.target.value)} placeholder={t("paPlaceholder")} disabled={isGetPaLuna} />
                 </label>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <label className="flex items-center gap-2 text-sm">
                   <Checkbox checked={isGetPaLuna} onChange={(e) => setIsGetPaLuna(e.target.checked)} />
-                  <span className="text-zinc-600 dark:text-zinc-400">Lấy tên PA từ tên file trong zip</span>
+                  <span className="text-zinc-600 dark:text-zinc-400">{t("getPaFromFileName")}</span>
                 </label>
 
                 <label className="flex items-center gap-2 text-sm">
-                  <span className="shrink-0 font-medium text-zinc-700 dark:text-zinc-300">Localize</span>
+                  <span className="shrink-0 font-medium text-zinc-700 dark:text-zinc-300">{t("localizeLabel")}</span>
                   <Select value={localize} onChange={(e) => setLocalize(e.target.value)} className="min-w-[160px]">
                     {LOCALIZE_OPTIONS.map((l) => (
                       <option key={l.value} value={l.value}>
@@ -163,7 +162,7 @@ export default function UnityPlayworksPage() {
               <div className="h-px bg-zinc-100 dark:bg-zinc-800" />
 
               <label className="flex flex-col gap-2 text-sm">
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">File .html hoặc .zip *</span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("fileLabel")}</span>
 
                 {file ? (
                   <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary-soft px-4 py-3">
@@ -174,7 +173,7 @@ export default function UnityPlayworksPage() {
                       <p className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-100">{file.name}</p>
                       <p className="text-xs text-zinc-500">{formatBytes(file.size)}</p>
                     </div>
-                    <Button type="button" variant="ghost" size="icon" onClick={clearFile} title="Bỏ chọn file" className="shrink-0 text-zinc-400! hover:text-red-500!">
+                    <Button type="button" variant="ghost" size="icon" onClick={clearFile} title={t("removeFile")} className="shrink-0 text-zinc-400! hover:text-red-500!">
                       <TrashIcon className="h-4 w-4" />
                     </Button>
                   </div>
@@ -189,9 +188,9 @@ export default function UnityPlayworksPage() {
                   >
                     <UploadCloudIcon className="h-8 w-8 text-zinc-400" />
                     <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Kéo thả hoặc <span className="font-medium text-primary">chọn file</span>
+                      {t("dropHint")} <span className="font-medium text-primary">{t("dropHintChooseFile")}</span>
                     </span>
-                    <span className="text-xs text-zinc-400">.html hoặc .zip</span>
+                    <span className="text-xs text-zinc-400">{t("dropHintTypes")}</span>
                     <Input
                       type="file"
                       accept=".html,.zip"
@@ -209,7 +208,7 @@ export default function UnityPlayworksPage() {
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-xs text-zinc-500">
                     <span>
-                      Đang upload: <span className="font-medium text-primary">{progress.networkName}</span>
+                      {t("uploading")} <span className="font-medium text-primary">{progress.networkName}</span>
                     </span>
                     <span className="tabular-nums">
                       {progress.current} / {progress.total}
@@ -235,7 +234,7 @@ export default function UnityPlayworksPage() {
 
               <Button type="submit" size="lg" loading={isUploading} disabled={!file}>
                 <UploadCloudIcon className="h-4 w-4" />
-                {isUploading ? "Đang upload..." : "Upload lên Drive"}
+                {isUploading ? t("uploadingButton") : t("uploadToDrive")}
               </Button>
             </Card>
           </form>

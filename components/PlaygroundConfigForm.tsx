@@ -8,6 +8,7 @@ import { Button, Checkbox, ColorInput, Input, Slider } from "@/components/common
 import { MediaPicker } from "@/components/MediaPicker";
 import { ImageIcon, MusicIcon } from "@/components/icons";
 import { swrKeys } from "@/lib/api/swr-keys";
+import { useT } from "@/lib/i18n/useT";
 import { usePlaygroundConfigForm } from "./usePlaygroundConfigForm";
 
 interface Props {
@@ -51,10 +52,11 @@ function assetKindToMediaKind(assetKind: string | null): MediaKind | null {
 }
 
 export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnly, token, gameId }: Props) {
+  const t = useT("playgroundConfigForm");
   const { groups, setValue, clearValue, getValue } = usePlaygroundConfigForm({ fieldsRegistry, config, onChange });
 
   if (groups.size === 0) {
-    return <p className="text-xs leading-relaxed text-zinc-500">Build này không có @playgroundField/@playgroundAsset nào để chỉnh.</p>;
+    return <p className="text-xs leading-relaxed text-zinc-500">{t("noFields")}</p>;
   }
 
   return (
@@ -118,12 +120,13 @@ function AssetFieldInput({
   onChange: (mediaId: string) => void;
   onClear: () => void;
 }) {
+  const t = useT("playgroundConfigForm");
   const [pickerOpen, setPickerOpen] = useState(false);
   const mediaKind = assetKindToMediaKind(assetKind);
   const { data: asset } = useSWR(mediaId ? swrKeys.mediaItem(mediaId) : null, () => api.getMedia(token, mediaId!));
 
   if (!mediaKind) {
-    return <span className="text-[11px] text-zinc-400">Không hỗ trợ ({assetKind ?? "?"})</span>;
+    return <span className="text-[11px] text-zinc-400">{t("unsupportedAssetKind", { kind: assetKind ?? "?" })}</span>;
   }
 
   return (
@@ -149,12 +152,12 @@ function AssetFieldInput({
 
       {!readOnly && (
         <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
-          {mediaId ? "Đổi" : "Chọn"}
+          {mediaId ? t("change") : t("choose")}
         </Button>
       )}
       {!readOnly && mediaId && (
         <Button type="button" variant="ghost" size="sm" className="text-zinc-400!" onClick={onClear}>
-          Xoá
+          {t("clear")}
         </Button>
       )}
 

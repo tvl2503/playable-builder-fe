@@ -6,31 +6,13 @@ import { Button, Dialog, Input, Slider } from "@/components/common";
 import { formatBytes } from "@/lib/format";
 import { type AudioQuality, decodeAudio, processAudio } from "@/lib/media/audioEdit";
 import { type ImageFormatMode, type MaxResolution, processImage } from "@/lib/media/imageEdit";
+import { useT } from "@/lib/i18n/useT";
 
 interface Props {
   file: File;
   onCancel: () => void;
   onConfirm: (blob: Blob, mimeType: string, name: string) => Promise<void>;
 }
-
-const IMAGE_FORMATS: { value: ImageFormatMode; label: string }[] = [
-  { value: "keep", label: "Giữ nguyên" },
-  { value: "lossless", label: "Lossless" },
-  { value: "lossy", label: "Lossy" },
-];
-
-const MAX_RESOLUTIONS: { value: MaxResolution; label: string }[] = [
-  { value: "original", label: "Gốc" },
-  { value: 2048, label: "2048px" },
-  { value: 1024, label: "1024px" },
-  { value: 512, label: "512px" },
-];
-
-const AUDIO_QUALITIES: { value: AudioQuality; label: string }[] = [
-  { value: "low", label: "Thấp" },
-  { value: "standard", label: "Chuẩn" },
-  { value: "high", label: "Cao" },
-];
 
 function nameWithoutExtension(fileName: string): string {
   const idx = fileName.lastIndexOf(".");
@@ -78,7 +60,27 @@ function PillGroup<T extends string | number>({
  * không đổi nội dung tới mức cần nghe lại để biết có đúng không.
  */
 export function MediaUploadDialog({ file, onCancel, onConfirm }: Props) {
+  const t = useT("media");
   const isImage = file.type.startsWith("image/");
+
+  const IMAGE_FORMATS: { value: ImageFormatMode; label: string }[] = [
+    { value: "keep", label: t("formatKeep") },
+    { value: "lossless", label: t("formatLossless") },
+    { value: "lossy", label: t("formatLossy") },
+  ];
+
+  const MAX_RESOLUTIONS: { value: MaxResolution; label: string }[] = [
+    { value: "original", label: t("resolutionOriginal") },
+    { value: 2048, label: "2048px" },
+    { value: 1024, label: "1024px" },
+    { value: 512, label: "512px" },
+  ];
+
+  const AUDIO_QUALITIES: { value: AudioQuality; label: string }[] = [
+    { value: "low", label: t("qualityLow") },
+    { value: "standard", label: t("qualityStandard") },
+    { value: "high", label: t("qualityHigh") },
+  ];
   const [name, setName] = useState(nameWithoutExtension(file.name));
   const [error, setError] = useState<string | null>(null);
   const [estimatedSize, setEstimatedSize] = useState<number | null>(null);
@@ -125,7 +127,7 @@ export function MediaUploadDialog({ file, onCancel, onConfirm }: Props) {
     try {
       if (isImage) return await processImage(file, maxResolution, formatMode);
       if (!audioBuffer) return null;
-      if (trimEnd <= trimStart) throw new Error("Khoảng trim không hợp lệ");
+      if (trimEnd <= trimStart) throw new Error(t("invalidTrimRange"));
       return await processAudio(audioBuffer, trimStart, trimEnd, speed, quality);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -158,10 +160,10 @@ export function MediaUploadDialog({ file, onCancel, onConfirm }: Props) {
   const busy = calculating || uploading;
 
   return (
-    <Dialog open onOpenChange={(open) => !open && !busy && onCancel()} title={`Chỉnh sửa trước khi upload — ${file.name}`} size="lg">
+    <Dialog open onOpenChange={(open) => !open && !busy && onCancel()} title={t("editBeforeUploadTitle", { name: file.name })} size="lg">
       <div className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">Tên</span>
+          <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("nameLabel")}</span>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </label>
 
@@ -175,7 +177,7 @@ export function MediaUploadDialog({ file, onCancel, onConfirm }: Props) {
               <span className="text-xs text-zinc-400">{file.name}</span>
             </div>
             <div className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Maximum Resolution</span>
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("maxResolutionLabel")}</span>
               <PillGroup
                 options={MAX_RESOLUTIONS}
                 value={maxResolution}
@@ -186,7 +188,7 @@ export function MediaUploadDialog({ file, onCancel, onConfirm }: Props) {
               />
             </div>
             <div className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Định dạng</span>
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("formatLabel")}</span>
               <PillGroup
                 options={IMAGE_FORMATS}
                 value={formatMode}
@@ -201,13 +203,13 @@ export function MediaUploadDialog({ file, onCancel, onConfirm }: Props) {
           <>
             <div className="flex items-center gap-2">
               {previewUrl && <AudioPlayButton src={previewUrl} />}
-              <span className="text-xs text-zinc-400">Nghe thử bản gốc — {file.name}</span>
+              <span className="text-xs text-zinc-400">{t("listenOriginal", { name: file.name })}</span>
             </div>
             {audioBuffer ? (
               <>
                 <label className="flex flex-col gap-1.5 text-sm">
                   <span className="flex items-center justify-between font-medium text-zinc-700 dark:text-zinc-300">
-                    <span>Bắt đầu</span>
+                    <span>{t("trimStart")}</span>
                     <span className="font-mono text-xs text-zinc-400">{formatSeconds(trimStart)}</span>
                   </span>
                   <Slider
@@ -223,7 +225,7 @@ export function MediaUploadDialog({ file, onCancel, onConfirm }: Props) {
                 </label>
                 <label className="flex flex-col gap-1.5 text-sm">
                   <span className="flex items-center justify-between font-medium text-zinc-700 dark:text-zinc-300">
-                    <span>Kết thúc</span>
+                    <span>{t("trimEnd")}</span>
                     <span className="font-mono text-xs text-zinc-400">{formatSeconds(trimEnd)}</span>
                   </span>
                   <Slider
@@ -239,7 +241,7 @@ export function MediaUploadDialog({ file, onCancel, onConfirm }: Props) {
                 </label>
                 <label className="flex flex-col gap-1.5 text-sm">
                   <span className="flex items-center justify-between font-medium text-zinc-700 dark:text-zinc-300">
-                    <span>Tốc độ</span>
+                    <span>{t("speedLabel")}</span>
                     <span className="font-mono text-xs text-zinc-400">{speed.toFixed(2)}x</span>
                   </span>
                   <Slider
@@ -254,7 +256,7 @@ export function MediaUploadDialog({ file, onCancel, onConfirm }: Props) {
                   />
                 </label>
                 <div className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Chất lượng</span>
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("qualityLabel")}</span>
                   <PillGroup
                     options={AUDIO_QUALITIES}
                     value={quality}
@@ -266,23 +268,23 @@ export function MediaUploadDialog({ file, onCancel, onConfirm }: Props) {
                 </div>
               </>
             ) : (
-              <p className="text-xs text-zinc-400">Đang đọc audio...</p>
+              <p className="text-xs text-zinc-400">{t("decodingAudio")}</p>
             )}
           </>
         )}
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-        {estimatedSize != null && <p className="text-xs text-zinc-500">Dự kiến dung lượng: {formatBytes(estimatedSize)}</p>}
+        {estimatedSize != null && <p className="text-xs text-zinc-500">{t("estimatedSize", { size: formatBytes(estimatedSize) })}</p>}
 
         <div className="flex items-center justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
-            Bỏ qua
+            {t("skip")}
           </Button>
           <Button type="button" variant="secondary" onClick={handleCalculate} loading={calculating} disabled={uploading}>
-            Tính dung lượng
+            {t("calculateSize")}
           </Button>
           <Button type="button" onClick={handleUpload} loading={uploading} disabled={calculating}>
-            Upload
+            {t("upload")}
           </Button>
         </div>
       </div>

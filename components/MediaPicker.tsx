@@ -11,6 +11,7 @@ import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { api, type MediaKind } from "@/lib/api";
 import { swrKeys } from "@/lib/api/swr-keys";
 import { extensionForMimeType } from "@/lib/media/imageEdit";
+import { useT } from "@/lib/i18n/useT";
 
 interface Props {
   open: boolean;
@@ -28,6 +29,7 @@ interface Props {
  * thao tác xoá/quản lý ở đây.
  */
 export function MediaPicker({ open, onOpenChange, token, gameId, kind, onSelect }: Props) {
+  const t = useT("media");
   const [search, setSearch] = useState("");
   const [editQueue, setEditQueue] = useState<File[]>([]);
 
@@ -55,13 +57,13 @@ export function MediaPicker({ open, onOpenChange, token, gameId, kind, onSelect 
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange} title={`Chọn ${kind === "IMAGE" ? "ảnh" : "audio"} từ kho Media`} size="lg">
+      <Dialog open={open} onOpenChange={onOpenChange} title={kind === "IMAGE" ? t("pickerTitleImage") : t("pickerTitleAudio")} size="lg">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo tên..." className="flex-1" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchPlaceholder")} className="flex-1" />
             <label className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600">
               <UploadCloudIcon className="h-4 w-4" />
-              Upload mới
+              {t("uploadNew")}
               <Input
                 type="file"
                 accept={kind === "IMAGE" ? "image/*" : "audio/*"}
@@ -81,7 +83,7 @@ export function MediaPicker({ open, onOpenChange, token, gameId, kind, onSelect 
           )}
 
           {assets && assets.length === 0 && (
-            <EmptyState icon={kind === "IMAGE" ? <ImageIcon className="h-9 w-9" /> : <MusicIcon className="h-9 w-9" />} title="Chưa có media nào" />
+            <EmptyState icon={kind === "IMAGE" ? <ImageIcon className="h-9 w-9" /> : <MusicIcon className="h-9 w-9" />} title={t("emptyMediaTitle")} />
           )}
 
           {assets && assets.length > 0 && (

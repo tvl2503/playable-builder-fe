@@ -15,6 +15,8 @@ import { PlaygroundConfigForm } from "@/components/PlaygroundConfigForm";
 import DeviceFrame from "@/components/Preview/DeviceFrame";
 import EventLogOverlay from "@/components/Preview/EventLogOverlay";
 import { routes } from "@/lib/routes";
+import { useT } from "@/lib/i18n/useT";
+import { useLocaleStore } from "@/lib/i18n/store";
 
 import { useVariantEditorPage } from "./useVariantEditorPage";
 
@@ -46,6 +48,11 @@ export default function VariantEditorPage() {
     selectedDevice,
     previewDevices,
   } = useVariantEditorPage();
+
+  const t = useT("variantEditor");
+  const tc = useT("common");
+  const locale = useLocaleStore((s) => s.locale);
+  const dateLocale = locale === "vi" ? "vi-VN" : "en-US";
 
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
@@ -169,14 +176,14 @@ export default function VariantEditorPage() {
             className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
           >
             <ArrowLeftIcon className="h-3.5 w-3.5" />
-            {build?.name ?? "Quay lại concept"}
+            {build?.name ?? t("backToConcept")}
           </Link>
 
           <div className="mt-0.5 flex items-center gap-2">
             <LayersIcon className="h-5 w-5 text-primary" />
 
             <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-              {variant?.name ?? "Biến thể"}
+              {variant?.name ?? t("variantFallback")}
             </h1>
           </div>
         </div>
@@ -185,7 +192,7 @@ export default function VariantEditorPage() {
           <div className="flex items-center gap-3">
             {saved && (
               <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                ✓ Đã lưu
+                {t("saved")}
               </span>
             )}
 
@@ -198,7 +205,7 @@ export default function VariantEditorPage() {
             {canShare && (
               <Button type="button" variant="secondary" onClick={handleOpenShareDialog}>
                 <ShareIcon className="h-4 w-4" />
-                Share
+                {t("share")}
               </Button>
             )}
 
@@ -209,7 +216,7 @@ export default function VariantEditorPage() {
                 disabled={!previewUrl}
                 loading={saving}
               >
-                {saving ? "Đang lưu..." : "Lưu biến thể"}
+                {saving ? t("saving") : t("saveVariant")}
               </Button>
             )}
           </div>
@@ -258,7 +265,7 @@ export default function VariantEditorPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setRotated((prev) => !prev)}
-                title={rotated ? "Xoay lại màn dọc" : "Xoay ngang màn"}
+                title={rotated ? t("rotateToPortrait") : t("rotateToLandscape")}
                 className={`hover:bg-zinc-100! dark:hover:bg-zinc-800! ${
                   rotated ? "text-primary!" : "text-zinc-400! hover:text-zinc-700! dark:hover:text-zinc-200!"
                 }`}
@@ -313,7 +320,7 @@ export default function VariantEditorPage() {
                       // lại từ đầu và tự đọc đúng kích thước canvas mới, không phải thấy y hệt bản cũ.
                       key={`${previewUrl}-${selectedDevice.id}-${rotated}`}
                       src={previewUrl}
-                      title="Variant preview"
+                      title={t("previewIframeTitle")}
                       sandbox="allow-scripts allow-same-origin"
                       style={{
                         display: "block",
@@ -331,12 +338,12 @@ export default function VariantEditorPage() {
           <div className="flex w-100 shrink-0 flex-col gap-3 overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-900/5 dark:border-zinc-800 dark:bg-zinc-900">
 
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-              Chỉnh sửa
+              {t("editPanelHeading")}
             </h2>
 
             {!canEdit && (
               <p className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                Bạn chỉ có quyền xem, không lưu được thay đổi.
+                {t("readOnlyNotice")}
               </p>
             )}
 
@@ -354,11 +361,11 @@ export default function VariantEditorPage() {
         </div>
       )}
 
-      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} title="Link xem công khai biến thể">
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} title={t("shareDialogTitle")}>
         {sharing && !shareLink && (
           <div className="flex items-center gap-2 text-sm text-zinc-500">
             <Spinner className="h-4 w-4" />
-            Đang tạo link...
+            {t("creatingLink")}
           </div>
         )}
 
@@ -367,19 +374,21 @@ export default function VariantEditorPage() {
         {shareUrl && (
           <div className="flex flex-col gap-3">
             <p className="text-xs text-zinc-500">
-              Ai có link này đều xem được (không cần đăng nhập, đã vá đúng config của biến thể &quot;{variant?.name}&quot;),{" "}
-              {shareLink?.expiresAt
-                ? `hết hạn ngày ${new Date(shareLink.expiresAt).toLocaleString("vi-VN")}.`
-                : "không hết hạn."}
+              {t("shareDescription", {
+                name: variant?.name ?? "",
+                expiry: shareLink?.expiresAt
+                  ? t("expiresOn", { date: new Date(shareLink.expiresAt).toLocaleString(dateLocale) })
+                  : t("neverExpires"),
+              })}
             </p>
             <div className="flex items-center gap-2">
               <Input readOnly value={shareUrl} onFocus={(e) => e.target.select()} className="flex-1 font-mono text-xs" />
               <Button type="button" variant="outline" size="sm" onClick={handleCopyShareUrl}>
-                {linkCopied ? "Đã copy" : "Copy"}
+                {linkCopied ? tc("copied") : tc("copy")}
               </Button>
             </div>
             <Button type="button" variant="danger" size="sm" onClick={handleRevokeAndClose} loading={sharing} className="self-start">
-              Thu hồi link
+              {t("revokeLink")}
             </Button>
           </div>
         )}

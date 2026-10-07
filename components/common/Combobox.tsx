@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { Popover } from "radix-ui";
+import { useT } from "@/lib/i18n/useT";
 
 export interface ComboboxOption {
   value: string;
@@ -21,7 +22,8 @@ interface ComboboxProps {
 
 /** Select có thể gõ để lọc + đề xuất, hiện icon từng option (vd icon game) — bọc Radix Popover vì `<select>` gốc không làm được. */
 const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(
-  ({ options, value, onChange, placeholder = "Tìm kiếm...", emptyText = "Không tìm thấy", className = "" }, ref) => {
+  ({ options, value, onChange, placeholder, emptyText, className = "" }, ref) => {
+    const t = useT("common");
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
     const [activeIndex, setActiveIndex] = useState(0);
@@ -81,7 +83,7 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(
                   setOpen(false);
                 }
               }}
-              placeholder={placeholder}
+              placeholder={placeholder ?? t("search")}
               autoComplete="off"
               className={`w-full rounded-lg border border-zinc-300 bg-white py-2 text-sm text-zinc-900 placeholder:text-zinc-400 transition-shadow focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-600 ${showSelectedIcon ? "pl-9 pr-3" : "px-3"} ${className}`}
             />
@@ -95,7 +97,7 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(
             className="z-50 max-h-64 w-[var(--radix-popover-trigger-width)] overflow-y-auto rounded-lg border border-zinc-200 bg-white p-1 shadow-lg shadow-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-900"
           >
             {filtered.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-zinc-400">{emptyText}</div>
+              <div className="px-3 py-2 text-sm text-zinc-400">{emptyText ?? t("notFound")}</div>
             ) : (
               filtered.map((opt, i) => (
                 <button

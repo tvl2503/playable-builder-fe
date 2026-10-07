@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import Button from "./Button";
 import Input from "./Input";
+import { useT } from "@/lib/i18n/useT";
 
 interface PromptDialogProps {
   open: boolean;
@@ -20,7 +21,8 @@ interface PromptDialogProps {
  * tên (concept/biến thể). Radix Dialog lo focus-trap/Escape/click-outside;
  * phần còn lại chỉ là style theo đúng token của app (xem globals.css).
  */
-export function PromptDialog({ open, title, label, initialValue, submitLabel = "Lưu", onOpenChange, onSubmit }: PromptDialogProps) {
+export function PromptDialog({ open, title, label, initialValue, submitLabel, onOpenChange, onSubmit }: PromptDialogProps) {
+  const t = useT("common");
   const [value, setValue] = useState(initialValue);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,11 +74,11 @@ export function PromptDialog({ open, title, label, initialValue, submitLabel = "
             <div className="mt-4 flex justify-end gap-2">
               <RadixDialog.Close asChild>
                 <Button type="button" variant="secondary" size="sm">
-                  Huỷ
+                  {t("cancel")}
                 </Button>
               </RadixDialog.Close>
               <Button type="submit" size="sm" loading={submitting} disabled={!value.trim() || value.trim() === initialValue}>
-                {submitLabel}
+                {submitLabel ?? t("save")}
               </Button>
             </div>
           </form>

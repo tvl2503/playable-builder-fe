@@ -9,15 +9,11 @@ import { PageLoading, Spinner } from "@/components/Spinner";
 import { ImageIcon, MusicIcon, TrashIcon, UploadCloudIcon } from "@/components/icons";
 import { MediaUploadDialog } from "@/components/MediaUploadDialog";
 import { formatBytes } from "@/lib/format";
+import { useT } from "@/lib/i18n/useT";
 import { useMediaLibraryPage, type MediaKindFilter } from "./useMediaLibraryPage";
 
-const KIND_FILTERS: { value: MediaKindFilter; label: string }[] = [
-  { value: "all", label: "Tất cả" },
-  { value: "IMAGE", label: "Ảnh" },
-  { value: "AUDIO", label: "Audio" },
-];
-
 function MediaCard({ asset, canDelete, onDelete }: { asset: ApiMediaAsset; canDelete: boolean; onDelete: (id: string) => Promise<void> }) {
+  const t = useT("media");
   const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -50,7 +46,7 @@ function MediaCard({ asset, canDelete, onDelete }: { asset: ApiMediaAsset; canDe
             onClick={() => setConfirmOpen(true)}
             disabled={deleting}
             className="absolute right-1 top-1 bg-white/90! text-zinc-500! opacity-0 hover:bg-red-50! hover:text-red-600! group-hover:opacity-100 dark:bg-zinc-800/90! dark:text-zinc-300!"
-            title="Xoá media"
+            title={t("deleteMediaTitle")}
           >
             {deleting ? <Spinner className="h-3.5 w-3.5" /> : <TrashIcon className="h-3.5 w-3.5" />}
           </Button>
@@ -64,9 +60,9 @@ function MediaCard({ asset, canDelete, onDelete }: { asset: ApiMediaAsset; canDe
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="Xoá media"
-        description={`Xoá media "${asset.name}"?`}
-        confirmLabel="Xoá media"
+        title={t("deleteMediaTitle")}
+        description={t("deleteMediaConfirm", { name: asset.name })}
+        confirmLabel={t("deleteMediaTitle")}
         danger
         onConfirm={handleDelete}
       />
@@ -94,15 +90,22 @@ export default function MediaLibraryPage() {
     confirmCurrentUpload,
     deleteAsset,
   } = useMediaLibraryPage();
+  const t = useT("media");
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  const KIND_FILTERS: { value: MediaKindFilter; label: string }[] = [
+    { value: "all", label: t("filterAll") },
+    { value: "IMAGE", label: t("filterImage") },
+    { value: "AUDIO", label: t("filterAudio") },
+  ];
 
   if (!session) return <PageLoading />;
 
   return (
     <main className="flex w-full flex-1 flex-col gap-6 px-8 py-10">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Thư viện Media</h1>
-        <p className="mt-1 text-sm text-zinc-500">Kho ảnh/audio dùng chung.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t("heading")}</h1>
+        <p className="mt-1 text-sm text-zinc-500">{t("subtitle")}</p>
       </div>
 
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
@@ -111,7 +114,7 @@ export default function MediaLibraryPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             <Select value={selectedGameId} onChange={(e) => setSelectedGameId(e.target.value)}>
-              <option value="">Tất cả game</option>
+              <option value="">{t("allGames")}</option>
               {games.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name}
@@ -132,7 +135,7 @@ export default function MediaLibraryPage() {
               </Button>
             ))}
           </div>
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo tên..." className="w-full sm:w-56" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchPlaceholder")} className="w-full sm:w-56" />
         </div>
 
         {canUpload && (
@@ -161,11 +164,13 @@ export default function MediaLibraryPage() {
               <span className="text-sm text-zinc-600 dark:text-zinc-400">
                 {selectedGameId ? (
                   <>
-                    Kéo thả hoặc <span className="font-medium text-primary">chọn ảnh/audio</span> — upload vào{" "}
+                    {t("dropzonePrefix")}
+                    <span className="font-medium text-primary">{t("dropzoneAction")}</span>
+                    {t("dropzoneSuffix")}
                     <span className="font-medium">{games.find((g) => g.id === selectedGameId)?.name}</span>
                   </>
                 ) : (
-                  "Chọn 1 game cụ thể ở trên để upload"
+                  t("dropzoneSelectGame")
                 )}
               </span>
               <Input
@@ -190,7 +195,7 @@ export default function MediaLibraryPage() {
         )}
 
         {assets && assets.length === 0 && (
-          <EmptyState icon={<ImageIcon className="h-9 w-9" />} title="Chưa có media nào" description="Upload ảnh hoặc audio để bắt đầu kho dùng chung." />
+          <EmptyState icon={<ImageIcon className="h-9 w-9" />} title={t("emptyMediaTitle")} description={t("emptyMediaDescription")} />
         )}
 
         {assets && assets.length > 0 && (

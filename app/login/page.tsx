@@ -3,10 +3,12 @@
 import { Suspense } from "react";
 import { Button, Card } from "@/components/common";
 import { GoogleIcon } from "@/components/icons";
+import { useT } from "@/lib/i18n/useT";
 import useLogin from "./hook";
 
 function LoginContent() {
   const { loading, isSigningIn, error, handleGoogleSignIn } = useLogin();
+  const t = useT("login");
 
   if (loading) {
     return (
@@ -22,8 +24,8 @@ function LoginContent() {
         <div className="mb-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/favicon.ico" alt="" className="mx-auto mb-4 h-12 w-12 rounded-full" />
-          <h1 className="mb-2 text-center text-3xl font-bold text-gray-900">Playable Builder</h1>
-          <p className="text-center text-sm text-gray-600">Đăng nhập để tiếp tục</p>
+          <h1 className="mb-2 text-center text-3xl font-bold text-gray-900">{t("heading")}</h1>
+          <p className="text-center text-sm text-gray-600">{t("subtitle")}</p>
         </div>
 
         <div className="space-y-4">
@@ -31,10 +33,10 @@ function LoginContent() {
 
           <Button type="button" variant="outline" size="lg" className="w-full" loading={isSigningIn} onClick={handleGoogleSignIn}>
             <GoogleIcon />
-            Continue with Google
+            {t("continueWithGoogle")}
           </Button>
 
-          <p className="text-center text-xs text-gray-400">By signing in, you agree to our Terms of Service and Privacy Policy.</p>
+          <p className="text-center text-xs text-gray-400">{t("terms")}</p>
         </div>
       </Card>
     </div>

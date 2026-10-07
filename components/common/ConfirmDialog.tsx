@@ -3,6 +3,7 @@
 import { useState } from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import Button from "./Button";
+import { useT } from "@/lib/i18n/useT";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -25,12 +26,13 @@ export function ConfirmDialog({
   open,
   title,
   description,
-  confirmLabel = "Xác nhận",
-  cancelLabel = "Huỷ",
+  confirmLabel,
+  cancelLabel,
   danger = false,
   onOpenChange,
   onConfirm,
 }: ConfirmDialogProps) {
+  const t = useT("common");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,11 +72,11 @@ export function ConfirmDialog({
           <div className="mt-4 flex justify-end gap-2">
             <RadixDialog.Close asChild>
               <Button type="button" variant="secondary" size="sm" disabled={submitting}>
-                {cancelLabel}
+                {cancelLabel ?? t("cancel")}
               </Button>
             </RadixDialog.Close>
             <Button type="button" variant={danger ? "danger" : "primary"} size="sm" loading={submitting} onClick={handleConfirm}>
-              {confirmLabel}
+              {confirmLabel ?? t("confirm")}
             </Button>
           </div>
         </RadixDialog.Content>

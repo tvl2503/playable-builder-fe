@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/common";
 import { PauseIcon, PlayIcon } from "@/components/icons";
+import { useT } from "@/lib/i18n/useT";
 
 interface Props {
   src: string;
@@ -11,6 +12,7 @@ interface Props {
 
 /** Nút nghe thử dùng chung — lưới media (asset đã upload) lẫn popup chỉnh sửa (file gốc chưa upload) đều cần đúng 1 việc: play/pause 1 src cho trước. */
 export function AudioPlayButton({ src, className = "" }: Props) {
+  const t = useT("common");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
 
@@ -27,7 +29,7 @@ export function AudioPlayButton({ src, className = "" }: Props) {
       variant="secondary"
       size="icon"
       onClick={toggle}
-      title={playing ? "Dừng" : "Nghe thử"}
+      title={playing ? t("stopAudio") : t("playAudio")}
       className={`rounded-full! ${className}`}
     >
       {playing ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4 translate-x-0.5" />}

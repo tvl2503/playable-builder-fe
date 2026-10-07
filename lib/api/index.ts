@@ -133,6 +133,8 @@ export interface ApiBuild {
   playgroundConfig: PlaygroundConfig;
   errorMessage: string | null;
   createdById: string;
+  /** Chỉ `GET /games/:gameId/builds` (danh sách concept) trả field này — các endpoint build khác không include. */
+  createdBy?: { id: string; name: string; email: string };
   createdAt: string;
   updatedAt: string;
   artifacts: ApiBuildArtifact[];

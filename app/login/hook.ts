@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/context";
 import { routes } from "@/lib/routes";
+import { useT } from "@/lib/i18n/useT";
 
 const useLogin = () => {
   const { user, loading, loginWithGoogle } = useAuth();
+  const t = useT("login");
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -26,7 +28,7 @@ const useLogin = () => {
       await loginWithGoogle();
       // Không cần tự điều hướng ở đây — effect phía trên sẽ chạy khi `user` cập nhật.
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Đăng nhập với Google thất bại");
+      setError(err instanceof Error ? err.message : t("genericError"));
     } finally {
       setIsSigningIn(false);
     }

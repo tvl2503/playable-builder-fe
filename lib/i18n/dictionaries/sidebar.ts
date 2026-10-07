@@ -1,0 +1,38 @@
+import { defineDict } from "../types";
+
+export const sidebarDict = defineDict(
+  {
+    navCreatives: "Creatives",
+    navMedia: "Media",
+    navAllGames: "All Games",
+    navUnityPlayworks: "Unity Playworks",
+    navAdmin: "Admin",
+    roleAdmin: "Admin",
+    roleDevelop: "Develop",
+    roleUa: "UA",
+    roleViewer: "Viewer",
+    expand: "Expand",
+    collapse: "Collapse",
+    switchToLight: "Switch to light theme",
+    switchToDark: "Switch to dark theme",
+    switchLanguage: "Switch language",
+    logout: "Log out",
+  },
+  {
+    navCreatives: "Creatives",
+    navMedia: "Media",
+    navAllGames: "All Games",
+    navUnityPlayworks: "Unity Playworks",
+    navAdmin: "Admin",
+    roleAdmin: "Admin",
+    roleDevelop: "Develop",
+    roleUa: "UA",
+    roleViewer: "Viewer",
+    expand: "Mở rộng",
+    collapse: "Thu gọn",
+    switchToLight: "Chuyển sang giao diện sáng",
+    switchToDark: "Chuyển sang giao diện tối",
+    switchLanguage: "Đổi ngôn ngữ",
+    logout: "Đăng xuất",
+  },
+);

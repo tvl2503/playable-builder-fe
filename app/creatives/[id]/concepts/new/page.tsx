@@ -7,15 +7,16 @@ import { ArrowLeftIcon, UploadCloudIcon } from "@/components/icons";
 import { PageLoading } from "@/components/Spinner";
 import { formatBytes } from "@/lib/format";
 import { routes } from "@/lib/routes";
+import { useT } from "@/lib/i18n/useT";
 import { useNewConceptPage, type PngMode } from "./useNewConceptPage";
 
-const PNG_MODES: { value: PngMode; label: string }[] = [
-  { value: "off", label: "Tắt — giữ nguyên ảnh gốc" },
-  { value: "palette", label: "Palette PNG — nén vừa, giữ định dạng PNG" },
-  { value: "webp", label: "WebP — nén mạnh nhất, đổi định dạng ảnh" },
-];
-
 export default function NewConceptPage() {
+  const t = useT("newConcept");
+  const PNG_MODES: { value: PngMode; label: string }[] = [
+    { value: "off", label: t("pngModeOff") },
+    { value: "palette", label: t("pngModePalette") },
+    { value: "webp", label: t("pngModeWebp") },
+  ];
   const {
     session,
     gameId,
@@ -48,21 +49,21 @@ export default function NewConceptPage() {
           className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
         >
           <ArrowLeftIcon className="h-3.5 w-3.5" />
-          Quay lại
+          {t("back")}
         </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Concept mới</h1>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t("title")}</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <Card padding="lg" className="flex w-full flex-col gap-4 lg:max-w-lg">
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Tên concept</span>
-            <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="vd: MazeRescue2" />
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("conceptNameLabel")}</span>
+            <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder={t("conceptNamePlaceholder")} />
           </label>
 
           <label className="flex flex-col gap-2 text-sm">
             <span className="font-medium text-zinc-700 dark:text-zinc-300">
-              File .zip của thư mục build <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs dark:bg-zinc-800">web-mobile</code>
+              {t("zipFieldLabel")} <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs dark:bg-zinc-800">web-mobile</code>
             </span>
             <label
               onDragOver={(e) => {
@@ -89,14 +90,14 @@ export default function NewConceptPage() {
             >
               <UploadCloudIcon className={`h-8 w-8 ${file ? "text-primary" : "text-zinc-400"}`} />
               <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                {file ? file.name : <>Kéo thả hoặc <span className="font-medium text-primary">chọn file</span></>}
+                {file ? file.name : <>{t("dropOr")} <span className="font-medium text-primary">{t("chooseFile")}</span></>}
               </span>
               <Input type="file" accept=".zip" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="hidden" />
             </label>
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Nén ảnh</span>
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">{t("pngCompressLabel")}</span>
             <Select value={pngMode} onChange={(e) => setPngMode(e.target.value as PngMode)}>
               {PNG_MODES.map((m) => (
                 <option key={m.value} value={m.value}>
@@ -109,7 +110,7 @@ export default function NewConceptPage() {
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
           <Button type="submit" loading={uploading} disabled={!file} className="mt-2 self-start">
-            {uploading ? "Đang upload..." : "Tạo concept"}
+            {uploading ? t("uploading") : t("createConcept")}
           </Button>
         </Card>
 
@@ -117,7 +118,9 @@ export default function NewConceptPage() {
           <Card padding="lg" className="flex w-full flex-col gap-3 lg:flex-1">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                {isScanningZip ? "Đang quét ảnh trong zip..." : `Ảnh PNG (${compressCount}/${pngImages.length} sẽ được nén)`}
+                {isScanningZip
+                  ? t("scanningZip")
+                  : t("pngImagesCount", { compressed: compressCount, total: pngImages.length })}
               </span>
               {pngImages.length > 0 && (
                 <div className="flex items-center gap-2 text-xs">
@@ -127,7 +130,7 @@ export default function NewConceptPage() {
                     onClick={() => toggleAllPngCompress(true)}
                     className="h-auto! rounded-none! p-0! text-xs! text-primary! hover:bg-transparent! hover:underline"
                   >
-                    Chọn tất cả
+                    {t("selectAll")}
                   </Button>
                   <span className="text-zinc-300 dark:text-zinc-700">/</span>
                   <Button
@@ -136,7 +139,7 @@ export default function NewConceptPage() {
                     onClick={() => toggleAllPngCompress(false)}
                     className="h-auto! rounded-none! p-0! text-xs! text-primary! hover:bg-transparent! hover:underline"
                   >
-                    Bỏ chọn tất cả
+                    {t("deselectAll")}
                   </Button>
                 </div>
               )}

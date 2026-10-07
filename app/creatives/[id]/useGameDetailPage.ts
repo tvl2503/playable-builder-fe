@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { useRequireAuth } from "@/lib/auth/use-require-auth";
@@ -9,6 +10,8 @@ import { swrKeys } from "@/lib/api/swr-keys";
 import { routes } from "@/lib/routes";
 
 const POLL_INTERVAL_MS = 3000;
+
+export type ConceptOwnerFilter = "mine" | "all";
 
 function isInFlight(build: ApiBuild): boolean {
   return build.status === "PENDING" || build.status === "PROCESSING";
@@ -35,10 +38,23 @@ export function useGameDetailPage() {
 
   const { data: games } = useSWR(session ? swrKeys.games() : null, () => api.listGames(session!.accessToken));
 
+  const canCreate = can(session?.permissions ?? null, "concept:create");
+
+  // Mặc định chỉ hiện concept của mình tạo — bấm "Tất cả" mới thấy của người khác. Riêng user không có
+  // quyền tạo concept (vd VIEWER) thường không tự tạo cái nào -> mặc định "Tất cả" luôn, đỡ phải tự bấm.
+  // null = chưa người dùng tự bấm gì — giữ nguyên null (thay vì chốt cứng lúc mount) vì `canCreate` phụ
+  // thuộc `session.permissions` tải bất đồng bộ sau; chốt cứng ở initializer sẽ bị kẹt "all" nếu lúc
+  // mount permissions chưa kịp về (useState initializer chỉ chạy đúng 1 lần).
+  const [ownerFilter, setOwnerFilter] = useState<ConceptOwnerFilter | null>(null);
+  const effectiveOwnerFilter: ConceptOwnerFilter = ownerFilter ?? (canCreate ? "mine" : "all");
+
+  const visibleBuilds =
+    effectiveOwnerFilter === "mine" && builds && session
+      ? builds.filter((b) => b.createdById === session.user.id)
+      : builds;
+
   const firstError = gameError ?? buildsError;
   const error = firstError ? (firstError instanceof Error ? firstError.message : String(firstError)) : null;
-
-  const canCreate = can(session?.permissions ?? null, "concept:create");
 
   const canEditBuild = (build: ApiBuild) =>
     canOnResource(session?.permissions ?? null, "concept", "edit", build.createdById, session?.user.id);
@@ -75,9 +91,11 @@ export function useGameDetailPage() {
     session,
     gameId,
     game: game ?? null,
-    builds: builds ?? null,
+    builds: visibleBuilds ?? null,
     games: games ?? [],
     error,
+    ownerFilter: effectiveOwnerFilter,
+    setOwnerFilter,
     canCreate,
     canEditBuild,
     canDeleteBuild,

@@ -6,29 +6,31 @@ import { GamesIcon } from "@/components/icons";
 import { PageLoading, Spinner } from "@/components/Spinner";
 import { EmptyState } from "@/components/EmptyState";
 import { routes } from "@/lib/routes";
+import { useT } from "@/lib/i18n/useT";
 import { useNewGamePage } from "./useNewGamePage";
 
 export default function NewGamePage() {
   const { session, search, setSearch, filteredCatalog, catalogLoading, catalogError, addingId, handleAddFromCatalog } = useNewGamePage();
+  const t = useT("newGame");
 
   if (!session) return <PageLoading />;
 
   return (
     <main className="flex w-full flex-1 flex-col gap-6 px-8 py-10">
       <div>
-        <Breadcrumb items={[{ label: "Creatives", href: routes.creatives }, { label: "Thêm game" }]} />
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Thêm game</h1>
+        <Breadcrumb items={[{ label: "Creatives", href: routes.creatives }, { label: t("breadcrumbAddGame") }]} />
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t("title")}</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Chọn từ danh sách{" "}
+          {t("description")}{" "}
           <Link href={routes.allGames} className="font-medium text-primary hover:underline">
             All Games
           </Link>{" "}
-          của công ty. Chưa thấy game cần thêm? Nhờ Admin thêm vào All Games trước.
+          {t("descriptionTail")}
         </p>
       </div>
 
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo tên hoặc package name..." className="max-w-sm" />
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchPlaceholder")} className="max-w-sm" />
 
         {catalogError && <p className="text-sm text-red-600 dark:text-red-400">{catalogError}</p>}
 
@@ -41,8 +43,8 @@ export default function NewGamePage() {
         {!catalogLoading && filteredCatalog.length === 0 && (
           <EmptyState
             icon={<GamesIcon className="h-10 w-10" />}
-            title={search ? "Không tìm thấy game nào" : "Không còn game nào để thêm"}
-            description={search ? "Thử từ khoá khác." : "Mọi game trong danh sách công ty đã được thêm vào đây rồi."}
+            title={search ? t("noResultsTitle") : t("noMoreTitle")}
+            description={search ? t("noResultsDescription") : t("noMoreDescription")}
           />
         )}
 
@@ -70,7 +72,7 @@ export default function NewGamePage() {
                   disabled={addingId !== null && addingId !== entry.id}
                   onClick={() => handleAddFromCatalog(entry.id)}
                 >
-                  Thêm
+                  {t("add")}
                 </Button>
               </div>
             ))}

@@ -6,6 +6,7 @@ import { useRequireAuth } from "@/lib/auth/use-require-auth";
 import { api, type ApiGameCatalogEntry, type CreateGameCatalogEntryInput } from "@/lib/api";
 import { can } from "@/lib/auth/permissions";
 import { swrKeys } from "@/lib/api/swr-keys";
+import { useT } from "@/lib/i18n/useT";
 
 const EMPTY_FORM: CreateGameCatalogEntryInput = {
   name: "",
@@ -47,6 +48,7 @@ function toPayload(form: CreateGameCatalogEntryInput): CreateGameCatalogEntryInp
 }
 
 export function useAllGamesPage() {
+  const t = useT("allGames");
   const session = useRequireAuth();
   const canManage = can(session?.permissions ?? null, "all-games:manage");
   const canDelete = can(session?.permissions ?? null, "all-games:delete");
@@ -142,7 +144,7 @@ export function useAllGamesPage() {
 
   const handleDelete = async (entry: ApiGameCatalogEntry) => {
     if (!session) return;
-    if (!confirm(`Xoá "${entry.name}" khỏi All Games?`)) return;
+    if (!confirm(t("confirmDelete", { name: entry.name }))) return;
     try {
       await api.deleteGameCatalogEntry(session.accessToken, entry.id);
       await mutate(swrKeys.gameCatalog(), () => api.listGameCatalog(session.accessToken));

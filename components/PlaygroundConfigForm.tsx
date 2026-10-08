@@ -28,6 +28,8 @@ interface Props {
   /** Cần cho field @playgroundAsset: mở MediaPicker (gọi API kho Media) + biết upload asset mới vào game nào. */
   token: string;
   gameId: string;
+  /** Xem usePlaygroundConfigForm.ts's doc comment — giá trị thực tế lúc game khởi động, đọc lại từ preview iframe. */
+  resolvedDefaults?: PlaygroundConfig;
 }
 
 /** Build cũ scan trước khi có fieldType (fieldsRegistry cũ lưu trong DB không có field này) — đoán lại y hệt logic phía backend, xem resolvePlaygroundFieldType() ở playgroundFields.ts. */
@@ -60,9 +62,9 @@ function assetKindToMediaKind(assetKind: string | null): MediaKind | null {
   return null;
 }
 
-export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnly, token, gameId }: Props) {
+export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnly, token, gameId, resolvedDefaults }: Props) {
   const t = useT("playgroundConfigForm");
-  const { groups, setValue, clearValue, getValue } = usePlaygroundConfigForm({ fieldsRegistry, config, onChange });
+  const { groups, setValue, clearValue, getValue } = usePlaygroundConfigForm({ fieldsRegistry, config, onChange, resolvedDefaults });
 
   if (groups.size === 0) {
     return <p className="text-xs leading-relaxed text-zinc-500">{t("noFields")}</p>;
@@ -290,7 +292,8 @@ function VecFieldInput({
       <span className="truncate text-xs text-zinc-600 dark:text-zinc-400" title={label}>
         {label}
       </span>
-      <div className={size === 4 ? "grid grid-cols-2 gap-1.5" : "flex items-center gap-2"}>
+      {/* grid-cols-2 cho cả vec2/vec3/vec4 — vec3 (3 trục, lẻ) tự xuống hàng dưới ở trục cuối (Z) thay vì tràn ngang. */}
+      <div className="grid grid-cols-2 gap-1.5">
         {axes.map((axis) => (
           <label key={axis} className="flex items-center gap-1">
             <span className="w-2.5 shrink-0 text-[10px] font-medium uppercase text-zinc-400">{axis}</span>

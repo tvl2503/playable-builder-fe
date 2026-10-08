@@ -27,9 +27,11 @@ export default function VariantEditorPage() {
     build,
     variant,
     config,
-    setConfig,
+    handleConfigChange,
     previewUrl,
     loadError,
+    resolvedDefaults,
+    handlePreviewLoad,
     canEdit,
     canShare,
     saving,
@@ -328,6 +330,7 @@ export default function VariantEditorPage() {
                       src={previewUrl}
                       title={t("previewIframeTitle")}
                       sandbox="allow-scripts allow-same-origin"
+                      onLoad={handlePreviewLoad}
                       style={{
                         display: "block",
                         width: previewDevice.width,
@@ -358,10 +361,11 @@ export default function VariantEditorPage() {
                 build?.fieldsRegistry ?? null
               }
               config={config}
-              onChange={setConfig}
+              onChange={handleConfigChange}
               readOnly={!canEdit}
               token={session.accessToken}
               gameId={build?.gameId ?? ""}
+              resolvedDefaults={resolvedDefaults}
             />
           </div>
         </div>

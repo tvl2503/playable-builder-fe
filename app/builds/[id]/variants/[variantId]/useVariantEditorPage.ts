@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import {
@@ -115,6 +115,33 @@ export function useVariantEditorPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  /**
+   * `window.__pgResolved` do __pgReportAll (xem playgroundFields.ts) ghi vào iframe preview ngay lúc
+   * onLoad()/start() — giá trị THỰC TẾ lúc khởi động (scene/prefab tự serialize thì là giá trị đó, không
+   * thì mới là default compiled-in), dùng làm fallback hiển thị trong form thay vì luôn lấy default khai
+   * trong code (2 giá trị này có thể lệch nhau — xem PLAYGROUND_REPORT_FN's doc comment phía backend).
+   * Game khởi động bất đồng bộ (sau khi tài liệu iframe đã "load" xong rất lâu) nên phải poll vài lần
+   * sau onLoad, không đọc được ngay trong sự kiện đó.
+   */
+  const [resolvedDefaults, setResolvedDefaults] = useState<PlaygroundConfig>({});
+
+  const handlePreviewLoad = useCallback((e: React.SyntheticEvent<HTMLIFrameElement>) => {
+    const win = e.currentTarget.contentWindow as (Window & { __pgResolved?: PlaygroundConfig }) | null;
+    setResolvedDefaults({});
+    if (!win) return;
+    let attempts = 0;
+    const poll = () => {
+      attempts += 1;
+      const resolved = win.__pgResolved;
+      if (resolved && Object.keys(resolved).length > 0) {
+        setResolvedDefaults(resolved);
+        return;
+      }
+      if (attempts < 30) setTimeout(poll, 200); // ~6s — đủ cho scene nặng, bỏ cuộc lặng lẽ nếu quá lâu
+    };
+    poll();
+  }, []);
+
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -127,12 +154,100 @@ export function useVariantEditorPage() {
   // mỗi lần debounce-preview bắn trong khi field asset đó chưa đổi.
   const mediaUrlCache = useRef<Map<string, string>>(new Map());
 
-  // Seed config từ variant đúng 1 lần mỗi khi ĐỔI variant.
+  /**
+   * "group::prop" của field CHƯA từng bị user tự sửa tay trong phiên này — nguồn sự thật để biết field
+   * nào được phép tự cập nhật theo resolvedDefaults mới (xem effect bên dưới) khi user mở lại trang (vd
+   * sau khi Reupload, scene đổi giá trị), field nào phải giữ tuyệt đối (đã có real override). Dùng ref
+   * (không phải state) vì bản thân nó không cần re-render gì — chỉ đọc lúc merge resolvedDefaults hoặc
+   * lúc Lưu, còn hiệu ứng lên UI thì qua `config` như bình thường.
+   */
+  const autoFilledKeysRef = useRef<Set<string>>(new Set());
+
+  /**
+   * variantId đã chạy xong merge resolvedDefaults lần đầu — chặn effect merge bên dưới chạy LẶP LẠI mỗi
+   * khi preview reload (kể cả reload do chính user tự sửa field KHÁC, vd đổi ảnh asset): mỗi reload đều
+   * khiến resolvedDefaults đổi reference (handlePreviewLoad reset về {} rồi set lại), nếu không chặn thì
+   * effect merge cứ chạy lại liên tục, có thể đụng `config` đúng lúc user vừa đổi field khác, làm preview
+   * của thay đổi đó bị trễ/không lên kịp. Chỉ cần merge đúng 1 lần lúc mở biến thể là đủ — reset lại field
+   * này mỗi khi ĐỔI variant (effect seed config bên dưới) để lần mở tiếp theo (vd sau khi Reupload) vẫn
+   * merge lại bình thường.
+   */
+  const mergedResolvedDefaultsForVariantRef = useRef<string | null>(null);
+
+  const canEdit =
+    !!variant &&
+    canOnResource(
+      session?.permissions ?? null,
+      "variant",
+      "edit",
+      variant.createdById,
+      session?.user.id,
+    );
+  const canShare = can(session?.permissions ?? null, "share");
+
+  // Seed config + autoFilledKeys từ variant đúng 1 lần mỗi khi ĐỔI variant.
   useEffect(() => {
     if (variant) {
       setConfig(variant.config);
+      autoFilledKeysRef.current = new Set(variant.autoFilledKeys ?? []);
+      mergedResolvedDefaultsForVariantRef.current = null;
     }
   }, [variant?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Field NÀO CHƯA CÓ override (không có key trong config) -> tự điền (hard-save) theo resolvedDefaults
+   * + đánh dấu autoFilled. Field ĐÃ CÓ override nhưng vẫn còn trong autoFilledKeys (tức user chưa từng tự
+   * sửa, giá trị cũ cũng chỉ là hệ thống tự điền lần trước) -> cập nhật lại theo resolvedDefaults MỚI nếu
+   * khác (vd sau khi Reupload, scene đổi giá trị). Field KHÔNG còn trong autoFilledKeys (user đã tự sửa ít
+   * nhất 1 lần — xem handleConfigChange) -> tuyệt đối không đụng tới, dù resolvedDefaults có khác đi mấy.
+   */
+  useEffect(() => {
+    if (!canEdit) return;
+    if (!resolvedDefaults || Object.keys(resolvedDefaults).length === 0) return;
+    // Đã merge rồi cho đúng biến thể này -> bỏ qua, không chạy lại mỗi lần preview reload sau đó nữa.
+    if (mergedResolvedDefaultsForVariantRef.current === variantId) return;
+    mergedResolvedDefaultsForVariantRef.current = variantId;
+
+    setConfig((prev) => {
+      let changed = false;
+      const next: PlaygroundConfig = { ...prev };
+      for (const [group, fields] of Object.entries(resolvedDefaults)) {
+        for (const [prop, value] of Object.entries(fields)) {
+          const key = `${group}::${prop}`;
+          const hasValue = next[group]?.[prop] !== undefined;
+          const isAutoFilled = autoFilledKeysRef.current.has(key);
+          if (!hasValue) {
+            next[group] = { ...next[group], [prop]: value };
+            autoFilledKeysRef.current.add(key);
+            changed = true;
+          } else if (isAutoFilled && JSON.stringify(next[group][prop]) !== JSON.stringify(value)) {
+            next[group] = { ...next[group], [prop]: value };
+            changed = true;
+          }
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [resolvedDefaults, canEdit, variantId]);
+
+  /**
+   * `onChange` thật sự đưa cho PlaygroundConfigForm (thay vì `setConfig` trần) — so trước/sau để biết
+   * đúng field nào vừa bị USER tự sửa (qua form, không phải effect merge resolvedDefaults ở trên) rồi bỏ
+   * nó khỏi autoFilledKeys vĩnh viễn (thành override thật, effect ở trên sẽ không bao giờ đụng lại).
+   */
+  const handleConfigChange = useCallback(
+    (newConfig: PlaygroundConfig) => {
+      for (const [group, fields] of Object.entries(newConfig)) {
+        for (const [prop, value] of Object.entries(fields)) {
+          if (JSON.stringify(config[group]?.[prop]) !== JSON.stringify(value)) {
+            autoFilledKeysRef.current.delete(`${group}::${prop}`);
+          }
+        }
+      }
+      setConfig(newConfig);
+    },
+    [config],
+  );
 
   // Tải bản single-html gốc để demo preview.
   useEffect(() => {
@@ -231,17 +346,6 @@ export function useVariantEditorPage() {
     };
   }, [baseHtml, config, build?.fieldsRegistry, session]);
 
-  const canEdit =
-    !!variant &&
-    canOnResource(
-      session?.permissions ?? null,
-      "variant",
-      "edit",
-      variant.createdById,
-      session?.user.id,
-    );
-  const canShare = can(session?.permissions ?? null, "share");
-
   const handleCreateShareLink = async () => {
     if (!session) return;
     setSharing(true);
@@ -285,6 +389,7 @@ export function useVariantEditorPage() {
         session.accessToken,
         variantId,
         config,
+        Array.from(autoFilledKeysRef.current),
       );
 
       mutateVariant(updated, {
@@ -307,10 +412,12 @@ export function useVariantEditorPage() {
     variant: variant ?? null,
 
     config,
-    setConfig,
+    handleConfigChange,
 
     previewUrl,
     loadError,
+    resolvedDefaults,
+    handlePreviewLoad,
 
     canEdit,
     canShare,

@@ -175,6 +175,8 @@ export interface ApiVariant {
   buildId: string;
   name: string;
   config: PlaygroundConfig;
+  /** Khớp PlaygroundConfigPreset.autoFilledKeys ở backend — "group::prop" của field chưa từng bị user tự sửa tay. */
+  autoFilledKeys: string[];
   createdById: string;
   createdBy: { name: string; email: string };
   createdAt: string;
@@ -256,8 +258,8 @@ export const api = {
   createVariant: (token: string, buildId: string, name: string) =>
     apiPost<ApiVariant>(`/builds/${buildId}/variants`, { name }, authHeader(token)),
   getVariant: (token: string, id: string) => apiGet<ApiVariant>(`/variants/${id}`, authHeader(token)),
-  updateVariantConfig: (token: string, id: string, config: PlaygroundConfig) =>
-    apiPatch<ApiVariant>(`/variants/${id}`, { config }, authHeader(token)),
+  updateVariantConfig: (token: string, id: string, config: PlaygroundConfig, autoFilledKeys: string[]) =>
+    apiPatch<ApiVariant>(`/variants/${id}`, { config, autoFilledKeys }, authHeader(token)),
   renameVariant: (token: string, id: string, name: string) => apiPatch<ApiVariant>(`/variants/${id}`, { name }, authHeader(token)),
   deleteVariant: (token: string, id: string) => apiDelete<void>(`/variants/${id}`, authHeader(token)),
   duplicateVariant: (token: string, id: string) => apiPost<ApiVariant>(`/variants/${id}/duplicate`, {}, authHeader(token)),

@@ -3,11 +3,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-import { Button, Dialog, Input, Select } from "@/components/common";
+import { Button, Dialog, Input, Select, Switch } from "@/components/common";
 import {
   ArrowLeftIcon,
   LayersIcon,
-  RotateDeviceIcon,
+  ReloadIcon,
   ShareIcon,
 } from "@/components/icons";
 import { PageLoading, Spinner } from "@/components/Spinner";
@@ -58,6 +58,7 @@ export default function VariantEditorPage() {
 
   const [deviceScale, setDeviceScale] = useState(1);
   const [rotated, setRotated] = useState(false);
+  const [reloadNonce, setReloadNonce] = useState(0);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
@@ -260,17 +261,21 @@ export default function VariantEditorPage() {
                 {rotated ? selectedDevice.width : selectedDevice.height}
               </span>
 
+              <label className="flex items-center gap-1.5 text-[11px] text-zinc-400">
+                <span className={!rotated ? "text-zinc-700 dark:text-zinc-200" : undefined}>{t("portrait")}</span>
+                <Switch checked={rotated} onChange={setRotated} />
+                <span className={rotated ? "text-zinc-700 dark:text-zinc-200" : undefined}>{t("landscape")}</span>
+              </label>
+
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={() => setRotated((prev) => !prev)}
-                title={rotated ? t("rotateToPortrait") : t("rotateToLandscape")}
-                className={`hover:bg-zinc-100! dark:hover:bg-zinc-800! ${
-                  rotated ? "text-primary!" : "text-zinc-400! hover:text-zinc-700! dark:hover:text-zinc-200!"
-                }`}
+                onClick={() => setReloadNonce((prev) => prev + 1)}
+                title={t("reloadPreview")}
+                className="text-zinc-400! hover:bg-zinc-100! hover:text-zinc-700! dark:hover:bg-zinc-800! dark:hover:text-zinc-200!"
               >
-                <RotateDeviceIcon className="h-4 w-4" />
+                <ReloadIcon className="h-4 w-4" />
               </Button>
 
               <div className="flex-1" />
@@ -288,7 +293,7 @@ export default function VariantEditorPage() {
               ref={previewContainerRef}
               className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden"
             >
-              <EventLogOverlay key={`${previewUrl}-${selectedDevice.id}-${rotated}`} />
+              <EventLogOverlay key={`${previewUrl}-${selectedDevice.id}-${rotated}-${reloadNonce}`} />
 
               {/*
                 previewDevice đã hoán vị width/height khi rotated — canvas/iframe được cấp đúng kích
@@ -318,7 +323,8 @@ export default function VariantEditorPage() {
                     <iframe
                       // rotated trong key -> ép remount lúc đổi hướng, để content bên trong (Cocos) load
                       // lại từ đầu và tự đọc đúng kích thước canvas mới, không phải thấy y hệt bản cũ.
-                      key={`${previewUrl}-${selectedDevice.id}-${rotated}`}
+                      // reloadNonce -> ép remount khi bấm nút reload thủ công, dù url/device/hướng không đổi.
+                      key={`${previewUrl}-${selectedDevice.id}-${rotated}-${reloadNonce}`}
                       src={previewUrl}
                       title={t("previewIframeTitle")}
                       sandbox="allow-scripts allow-same-origin"

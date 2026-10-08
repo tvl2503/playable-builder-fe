@@ -20,18 +20,19 @@
  * unique — two different classes CAN share a section, in which case their
  * fields land under the same config key (accepted tradeoff, not a bug).
  */
+import type { PlaygroundVecValue } from "@/lib/api";
 
 /** A single @playgroundField property override, addressed by group key + prop name (not by scene node). */
 export interface PlaygroundConfigOverride {
   groupKey: string;
   propName: string;
-  value: string | number | boolean;
+  value: string | number | boolean | PlaygroundVecValue;
 }
 
 const CONFIG_SCRIPT_MARKER = "data-playground-config";
 
-function toConfigObject(overrides: PlaygroundConfigOverride[]): Record<string, Record<string, string | number | boolean>> {
-  const config: Record<string, Record<string, string | number | boolean>> = {};
+function toConfigObject(overrides: PlaygroundConfigOverride[]): Record<string, Record<string, string | number | boolean | PlaygroundVecValue>> {
+  const config: Record<string, Record<string, string | number | boolean | PlaygroundVecValue>> = {};
   for (const { groupKey, propName, value } of overrides) {
     config[groupKey] = config[groupKey] || {};
     config[groupKey][propName] = value;

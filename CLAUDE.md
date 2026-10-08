@@ -40,11 +40,13 @@ constants/
 
 - **Concept** = 1 lần upload web-mobile = `Build` ở backend. **Biến thể** = `PlaygroundConfigPreset`.
 - **playgroundConfig**: `Record<section, Record<field, value>>`. Build đã bọc mọi `@playgroundField` đọc từ `window.__playgroundConfig`, nên live preview chỉ inject lại script đó rồi reboot iframe, không build lại.
-- **`fieldsRegistry.matches[].fieldType`**: `{ type: "boolean"|"integer"|"float"|"number"|"string"|"color", slider?, min?, max?, step? }`, khớp
-  `PlaygroundFieldTypeInfo` ở `../playable-builder/src/pipeline/playgroundFields.ts`. `PlaygroundConfigForm.tsx` dựng input theo field này, toàn bộ
-  qua `components/common` — `Checkbox` (boolean), `Input` type=number/text (integer/float/number/string), `Slider` (numeric có `slider:true` + đủ
-  `min`/`max`), `ColorInput` (color) — không viết `<input>` thô trong form này; build cũ scan trước khi có field này thì `fieldType` là `null` —
-  form tự đoán lại qua `inferFieldType()` (y hệt logic backend) để không vỡ với build cũ.
+- **`fieldsRegistry.matches[].fieldType`**: `{ type: "boolean"|"integer"|"float"|"number"|"string"|"color"|"vec2"|"vec3"|"vec4", slider?, min?, max?,
+  step? }`, khớp `PlaygroundFieldTypeInfo` ở `../playable-builder/src/pipeline/playgroundFields.ts`. `PlaygroundConfigForm.tsx` dựng input theo field
+  này, toàn bộ qua `components/common` — `Switch` (boolean), `NumberInput`/`Input` type=text (integer/float/number/string), `Slider` (numeric có
+  `slider:true` + đủ `min`/`max`), `ColorInput` (color) — không viết `<input>` thô trong form này; build cũ scan trước khi có field này thì
+  `fieldType` là `null` — form tự đoán lại qua `inferFieldType()` (y hệt logic backend) để không vỡ với build cũ. Field `vec2`/`vec3`/`vec4` tách
+  riêng khỏi `FieldInput` (component `VecFieldInput`) — giá trị là object `{x,y[,z][,w]}` (không phải hex string như color), hiện 2-4 `NumberInput`
+  cạnh nhau theo từng trục thay vì 1 input dùng chung.
 - **Export chọn nhiều config**: `builds/[id]/page.tsx`'s "Dùng config của" là multi-select (pill giống Ad network, không phải `<select>` đơn nữa)
   — `useBuildDetailPage.ts`'s `selectedVariantIds: string[]` (`""` = "Mặc định (engine)", cùng danh sách chọn với biến thể thật).
   `handleExport()` gọi `exportBuild()` ĐÚNG 1 LẦN với cả `networks` lẫn `selectedVariantIds` — backend (`GET /builds/:id/export?networks=...&variantIds=...`,

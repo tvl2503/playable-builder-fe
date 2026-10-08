@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { PlaygroundConfig, PlaygroundFieldsRegistry, PlaygroundMatch } from "@/lib/api";
+import type { PlaygroundConfig, PlaygroundFieldsRegistry, PlaygroundMatch, PlaygroundVecValue } from "@/lib/api";
 
 function groupKey(match: PlaygroundMatch): string {
   // Phải khớp playgroundGroupKey() ở playable-builder/src/pipeline/playgroundFields.ts
@@ -26,7 +26,7 @@ export function usePlaygroundConfigForm({ fieldsRegistry, config, onChange }: Op
     return map;
   }, [fieldsRegistry]);
 
-  const setValue = (group: string, prop: string, value: string | number | boolean) => {
+  const setValue = (group: string, prop: string, value: string | number | boolean | PlaygroundVecValue) => {
     onChange({ ...config, [group]: { ...config[group], [prop]: value } });
   };
 

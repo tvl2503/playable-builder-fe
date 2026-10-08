@@ -90,7 +90,7 @@ export interface ApiBuildArtifact {
 }
 
 /** Khớp PlaygroundFieldType/PlaygroundFieldTypeInfo ở playable-builder/src/pipeline/playgroundFields.ts. */
-export type PlaygroundFieldType = "boolean" | "integer" | "float" | "number" | "string" | "color";
+export type PlaygroundFieldType = "boolean" | "integer" | "float" | "number" | "string" | "color" | "vec2" | "vec3" | "vec4";
 
 export interface PlaygroundFieldTypeInfo {
   type: PlaygroundFieldType;
@@ -98,6 +98,14 @@ export interface PlaygroundFieldTypeInfo {
   min?: number;
   max?: number;
   step?: number;
+}
+
+/** Giá trị override của field "vec2"/"vec3"/"vec4" — z/w chỉ có với vec3/vec4. */
+export interface PlaygroundVecValue {
+  x: number;
+  y: number;
+  z?: number;
+  w?: number;
 }
 
 /** Khớp PlaygroundMatch ở playable-builder/src/pipeline/playgroundFields.ts. */
@@ -118,7 +126,7 @@ export interface PlaygroundFieldsRegistry {
   hooks: unknown[];
 }
 
-export type PlaygroundConfig = Record<string, Record<string, string | number | boolean>>;
+export type PlaygroundConfig = Record<string, Record<string, string | number | boolean | PlaygroundVecValue>>;
 
 export type BuildStatus = "PENDING" | "PROCESSING" | "SUCCESS" | "FAILED";
 

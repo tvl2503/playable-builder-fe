@@ -11,6 +11,7 @@ import { mediaDict } from "./media";
 import { newConceptDict } from "./newConcept";
 import { newGameDict } from "./newGame";
 import { unityPlayworksDict } from "./unityPlayworks";
+import { docsDict } from "./docs";
 import { variantEditorDict } from "./variantEditor";
 import { newVariantDict } from "./newVariant";
 import { playgroundConfigFormDict } from "./playgroundConfigForm";
@@ -35,6 +36,7 @@ export const translations = {
   newConcept: newConceptDict,
   newGame: newGameDict,
   unityPlayworks: unityPlayworksDict,
+  docs: docsDict,
   variantEditor: variantEditorDict,
   newVariant: newVariantDict,
   playgroundConfigForm: playgroundConfigFormDict,

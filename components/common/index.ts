@@ -6,6 +6,7 @@ export { default as Checkbox } from "./Checkbox";
 export { default as Combobox } from "./Combobox";
 export type { ComboboxOption } from "./Combobox";
 export { default as ColorInput } from "./ColorInput";
+export { default as CodeBlock } from "./CodeBlock";
 export { ConfirmDialog } from "./ConfirmDialog";
 export { Dialog } from "./Dialog";
 export { default as Input } from "./Input";

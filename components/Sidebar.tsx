@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "./common";
-import { ChevronRightIcon, GamesIcon, ImageIcon, LayersIcon, LogoutIcon, MoonIcon, ShieldIcon, SunIcon, UnityIcon } from "./icons";
+import { BookIcon, ChevronRightIcon, GamesIcon, ImageIcon, LayersIcon, LogoutIcon, MoonIcon, ShieldIcon, SunIcon, UnityIcon } from "./icons";
 import { useSidebar, type SidebarNavItem } from "./useSidebar";
 
 const ICONS: Record<SidebarNavItem["id"], typeof GamesIcon> = {
@@ -10,6 +10,7 @@ const ICONS: Record<SidebarNavItem["id"], typeof GamesIcon> = {
   media: ImageIcon,
   "all-games": LayersIcon,
   "unity-playworks": UnityIcon,
+  docs: BookIcon,
   admin: ShieldIcon,
 };
 

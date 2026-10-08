@@ -10,7 +10,7 @@ import { useT } from "@/lib/i18n/useT";
 import type { Locale } from "@/lib/i18n/types";
 
 export interface SidebarNavItem {
-  id: "games" | "media" | "all-games" | "unity-playworks" | "admin";
+  id: "games" | "media" | "all-games" | "unity-playworks" | "docs" | "admin";
   label: string;
   href: string;
 }
@@ -66,6 +66,7 @@ export function useSidebar() {
     { id: "media", label: t("navMedia"), href: routes.media },
     { id: "all-games", label: t("navAllGames"), href: routes.allGames },
     { id: "unity-playworks", label: t("navUnityPlayworks"), href: routes.unityPlayworks },
+    { id: "docs", label: t("navDocs"), href: routes.docs },
     ...(user?.role === "ADMIN" ? [{ id: "admin" as const, label: t("navAdmin"), href: routes.admin }] : []),
   ];
 

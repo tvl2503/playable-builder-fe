@@ -142,7 +142,7 @@ export default function DocsPage() {
   ];
 
   return (
-    <main className="w-full flex-1 px-6 py-10 sm:px-10">
+    <main className="w-full flex-1 px-4 py-6 sm:px-10 sm:py-10">
       <div className="grid w-full grid-cols-1 gap-8 lg:grid-cols-[240px_1fr] xl:grid-cols-[280px_1fr]">
         {/* Hero + TOC */}
         <div className="flex flex-col gap-6 lg:col-span-2">

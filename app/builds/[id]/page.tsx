@@ -218,15 +218,15 @@ export default function BuildDetailPage() {
   if (!build && !error) return <PageLoading />;
   if (!build) {
     return (
-      <main className="flex w-full flex-1 flex-col gap-6 px-8 py-10">
+      <main className="flex w-full flex-1 flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10">
         <p className="mx-auto w-full max-w-4xl text-sm text-red-600 dark:text-red-400">{error}</p>
       </main>
     );
   }
 
   return (
-    <main className="flex w-full flex-1 flex-col gap-6 px-8 py-10">
-      <div className="flex items-start justify-between">
+    <main className="flex w-full flex-1 flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Breadcrumb
             items={[

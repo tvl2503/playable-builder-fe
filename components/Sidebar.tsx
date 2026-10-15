@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "./common";
 import { BookIcon, ChevronRightIcon, GamesIcon, ImageIcon, LayersIcon, LogoutIcon, MoonIcon, ShieldIcon, SunIcon, UnityIcon } from "./icons";
@@ -14,19 +15,41 @@ const ICONS: Record<SidebarNavItem["id"], typeof GamesIcon> = {
   admin: ShieldIcon,
 };
 
-export function Sidebar() {
-  const { user, navItems, isActive, handleLogout, collapsed, toggleCollapsed, theme, toggleTheme, locale, toggleLocale, roleLabel, t } =
+/** md = 768px, khớp breakpoint `md:` của Tailwind. Dưới mức này sidebar là drawer luôn ở dạng mở rộng. */
+function useIsDesktop(): boolean {
+  const [isDesktop, setIsDesktop] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return isDesktop;
+}
+
+interface SidebarProps {
+  mobileOpen: boolean;
+  onMobileClose: () => void;
+}
+
+export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
+  const isDesktop = useIsDesktop();
+  const { user, navItems, isActive, handleLogout, collapsed: collapsedPref, toggleCollapsed, theme, toggleTheme, locale, toggleLocale, roleLabel, t } =
     useSidebar();
 
+  const collapsed = collapsedPref && isDesktop;
   const displayName = user?.name ?? "User";
   const email = user?.email ?? "";
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
+    <>
+    {mobileOpen && <div className="fixed inset-0 z-30 bg-zinc-950/50 md:hidden" onClick={onMobileClose} aria-hidden />}
     <aside
-      className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-zinc-200 bg-white transition-[width] duration-200 ease-in-out dark:border-zinc-800 dark:bg-zinc-950 ${
-        collapsed ? "w-[72px]" : "w-64"
-      }`}
+      className={`fixed inset-y-0 left-0 z-40 flex h-dvh shrink-0 flex-col border-r border-zinc-200 bg-white transition-[width,transform] duration-200 ease-in-out md:sticky md:top-0 md:z-auto md:h-screen md:translate-x-0 dark:border-zinc-800 dark:bg-zinc-950 ${
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      } ${collapsed ? "w-[72px]" : "w-64"}`}
     >
       {/*
         overflow-y-auto nằm ở wrapper trong này, KHÔNG phải trên <aside> — nếu đặt overflow-y trên
@@ -42,7 +65,7 @@ export function Sidebar() {
           // rounded-full!/p-0!: Button.tsx's baseStyles (rounded-lg) và sizeStyles (px-4 py-2) đứng sau
           // trong CSS build ra (Tailwind tự sắp theo nhóm utility, không theo thứ tự trong className) nên
           // thắng nếu không ép !important ở đây.
-          className="rounded-full! p-0! absolute -right-3 top-8 z-10 h-6 w-6 border border-zinc-200 bg-white text-zinc-400 shadow-sm hover:bg-white! hover:text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-900! dark:hover:text-zinc-200"
+          className="max-md:hidden! rounded-full! p-0! absolute -right-3 top-8 z-10 h-6 w-6 border border-zinc-200 bg-white text-zinc-400 shadow-sm hover:bg-white! hover:text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-900! dark:hover:text-zinc-200"
         >
           <ChevronRightIcon className={`h-3.5 w-3.5 transition-transform ${collapsed ? "" : "rotate-180"}`} />
         </Button>
@@ -62,6 +85,7 @@ export function Sidebar() {
                 <li key={item.id}>
                   <Link
                     href={item.href}
+                    onClick={onMobileClose}
                     title={collapsed ? item.label : undefined}
                     className={`group relative flex items-center gap-3 rounded-lg py-2.5 text-sm transition-colors ${
                       collapsed ? "justify-center px-0" : "px-3"
@@ -141,5 +165,6 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }

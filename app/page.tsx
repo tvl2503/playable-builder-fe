@@ -42,7 +42,7 @@ export default function Home() {
   });
 
   return (
-    <main className="flex w-full flex-1 flex-col gap-8 px-8 py-10">
+    <main className="flex w-full flex-1 flex-col gap-8 px-4 py-6 sm:px-8 sm:py-10">
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-400 via-orange-500 to-amber-500 p-8 text-white shadow-lg shadow-orange-900/20">
         <div className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 rounded-full bg-white/10" />
         <div className="pointer-events-none absolute -bottom-16 right-24 h-40 w-40 rounded-full bg-white/10" />

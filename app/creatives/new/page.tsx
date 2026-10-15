@@ -16,7 +16,7 @@ export default function NewGamePage() {
   if (!session) return <PageLoading />;
 
   return (
-    <main className="flex w-full flex-1 flex-col gap-6 px-8 py-10">
+    <main className="flex w-full flex-1 flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10">
       <div>
         <Breadcrumb items={[{ label: "Creatives", href: routes.creatives }, { label: t("breadcrumbAddGame") }]} />
         <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t("title")}</h1>

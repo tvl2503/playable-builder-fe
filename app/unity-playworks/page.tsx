@@ -46,7 +46,7 @@ export default function UnityPlayworksPage() {
   if (!session) return <PageLoading />;
 
   return (
-    <main className="flex w-full flex-1 justify-center px-6 py-10 sm:px-8">
+    <main className="flex w-full flex-1 justify-center px-4 py-6 sm:px-8 sm:py-10">
       <div className="flex w-full max-w-4xl flex-col gap-8">
         {/* Hero */}
         <div className="flex flex-col items-center gap-3 text-center">

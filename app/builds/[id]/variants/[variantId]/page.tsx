@@ -166,13 +166,13 @@ export default function VariantEditorPage() {
   }
 
   return (
-    <main className="flex h-full min-h-0 flex-col gap-4 bg-zinc-50 px-6 py-5 dark:bg-black">
+    <main className="flex min-h-full flex-col gap-4 bg-zinc-50 px-3 py-4 sm:px-6 sm:py-5 lg:h-full lg:min-h-0 dark:bg-black">
 
       {/* ------------------------------------------------------ */}
       {/* Header */}
       {/* ------------------------------------------------------ */}
 
-      <div className="flex shrink-0 items-center justify-between">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div>
           <Link
             href={routes.build(buildId)}
@@ -192,7 +192,7 @@ export default function VariantEditorPage() {
         </div>
 
         {(canEdit || canShare) && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {saved && (
               <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
                 {t("saved")}
@@ -240,12 +240,12 @@ export default function VariantEditorPage() {
       )}
 
       {previewUrl && (
-        <div className="flex min-h-0 flex-1 gap-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:gap-5">
 
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="flex min-w-0 flex-col overflow-hidden max-lg:h-[65vh] max-lg:flex-none lg:flex-1 rounded-2xl border border-zinc-200 bg-zinc-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
 
 
-            <div className="flex h-12 shrink-0 items-center gap-2 border-b border-zinc-200 bg-white px-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex h-12 shrink-0 items-center gap-2 overflow-x-auto border-b border-zinc-200 bg-white px-3 dark:border-zinc-800 dark:bg-zinc-900">
 
 
               <Select compact value={deviceId} onChange={(e) => setDeviceId(e.target.value)}>
@@ -344,7 +344,7 @@ export default function VariantEditorPage() {
             </div>
           </div>
 
-          <div className="flex w-100 shrink-0 flex-col gap-3 overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-900/5 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex w-full shrink-0 flex-col lg:w-100 gap-3 overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-900/5 dark:border-zinc-800 dark:bg-zinc-900">
 
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
               {t("editPanelHeading")}

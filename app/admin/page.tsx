@@ -38,7 +38,7 @@ export default function AdminPage() {
 
   if (!isAdmin) {
     return (
-      <main className="flex w-full flex-1 flex-col gap-6 px-8 py-10">
+      <main className="flex w-full flex-1 flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10">
         <p className="text-sm text-zinc-500">{t("adminOnly")}</p>
       </main>
     );
@@ -47,7 +47,7 @@ export default function AdminPage() {
   const groups = [...new Set(defs.map((d) => d.group))];
 
   return (
-    <main className="flex w-full flex-1 flex-col gap-6 px-8 py-10">
+    <main className="flex w-full flex-1 flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t("heading")}</h1>
         <p className="mt-1 text-xs text-zinc-500">{t("subheading")}</p>
@@ -64,14 +64,14 @@ export default function AdminPage() {
           )}
           {users && (
             <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-900/5 dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="grid grid-cols-[1fr_1fr_auto] gap-4 border-b border-zinc-200 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:border-zinc-800">
+              <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_1fr_auto] gap-4 border-b border-zinc-200 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:border-zinc-800">
                 <span>{t("colName")}</span>
                 <span>{t("colEmail")}</span>
                 <span>{t("colRole")}</span>
               </div>
               <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {users.map((u) => (
-                  <div key={u.id} className="grid grid-cols-[1fr_1fr_auto] items-center gap-4 px-4 py-3 text-sm">
+                  <div key={u.id} className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_1fr_auto] items-center gap-4 px-4 py-3 text-sm">
                     <span className="truncate font-medium text-zinc-900 dark:text-zinc-50">{u.name}</span>
                     <span className="truncate text-xs text-zinc-500">{u.email}</span>
                     <Select

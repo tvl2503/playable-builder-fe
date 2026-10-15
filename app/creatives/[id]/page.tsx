@@ -214,8 +214,8 @@ export default function GameDetailPage() {
   if (!game && !error) return <PageLoading />;
 
   return (
-    <main className="flex w-full flex-1 flex-col gap-6 px-8 py-10">
-      <div className="flex items-start justify-between">
+    <main className="flex w-full flex-1 flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Breadcrumb items={[{ label: t("creativesBreadcrumb"), href: routes.creatives }, { label: game?.name ?? "..." }]} />
           {game && (

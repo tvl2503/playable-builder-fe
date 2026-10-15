@@ -35,6 +35,7 @@ import {
   UploadCloudIcon,
 } from "@/components/icons";
 import type { FieldDiffChange, FieldDiffEntry } from "@/lib/cocos/fieldsRegistryDiff";
+import { formatSize, sizeColorClass } from "@/lib/format";
 import { routes } from "@/lib/routes";
 import { useT } from "@/lib/i18n/useT";
 import { useLocaleStore } from "@/lib/i18n/store";
@@ -83,6 +84,7 @@ export default function BuildDetailPage() {
   };
   const {
     session,
+    variantSizes,
     buildId,
     build,
     game,
@@ -405,6 +407,7 @@ export default function BuildDetailPage() {
                     <TableHead>{t("colName")}</TableHead>
                     <TableHead>{t("colCreator")}</TableHead>
                     <TableHead>{t("colUpdated")}</TableHead>
+                    <TableHead>{t("colSize")}</TableHead>
                     <TableHead>{t("colShare")}</TableHead>
                     <TableHead align="right" />
                   </TableRow>
@@ -421,6 +424,13 @@ export default function BuildDetailPage() {
                       </TableCell>
                       <TableCell className="text-xs text-zinc-500">{variant.createdBy.name || variant.createdBy.email}</TableCell>
                       <TableCell className="text-xs text-zinc-500">{new Date(variant.updatedAt).toLocaleString(dateLocale)}</TableCell>
+                      <TableCell className="text-xs">
+                        {variantSizes?.[variant.id] !== undefined ? (
+                          <span className={sizeColorClass(variantSizes[variant.id])}>{formatSize(variantSizes[variant.id])}</span>
+                        ) : (
+                          <span className="text-zinc-400">{variantSizes ? "—" : "…"}</span>
+                        )}
+                      </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <Button
                           type="button"

@@ -14,6 +14,7 @@ import { PageLoading, Spinner } from "@/components/Spinner";
 import { PlaygroundConfigForm } from "@/components/PlaygroundConfigForm";
 import DeviceFrame from "@/components/Preview/DeviceFrame";
 import EventLogOverlay from "@/components/Preview/EventLogOverlay";
+import { formatSize, sizeColorClass } from "@/lib/format";
 import { routes } from "@/lib/routes";
 import { useT } from "@/lib/i18n/useT";
 import { useLocaleStore } from "@/lib/i18n/store";
@@ -22,6 +23,7 @@ import { useVariantEditorPage } from "./useVariantEditorPage";
 
 export default function VariantEditorPage() {
   const {
+    estimatedSize,
     session,
     buildId,
     build,
@@ -193,6 +195,15 @@ export default function VariantEditorPage() {
 
         {(canEdit || canShare) && (
           <div className="flex flex-wrap items-center gap-3">
+            {estimatedSize !== null && (
+              <span
+                className={`text-xs ${sizeColorClass(estimatedSize)}`}
+                title={t("estimatedSizeHint")}
+              >
+                {t("estimatedSize")}: {formatSize(estimatedSize)}
+              </span>
+            )}
+
             {saved && (
               <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
                 {t("saved")}

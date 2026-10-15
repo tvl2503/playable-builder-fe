@@ -262,6 +262,12 @@ export const api = {
     apiPatch<ApiVariant>(`/variants/${id}`, { config, autoFilledKeys }, authHeader(token)),
   renameVariant: (token: string, id: string, name: string) => apiPatch<ApiVariant>(`/variants/${id}`, { name }, authHeader(token)),
   deleteVariant: (token: string, id: string) => apiDelete<void>(`/variants/${id}`, authHeader(token)),
+  /** Ước lượng nhanh dung lượng file export của 1 config (kể cả chưa lưu) — xem VariantsService.estimateSize ở backend. */
+  /** `{ [variantId]: bytes }` — ước lượng cho mọi biến thể của concept trong 1 lần gọi. */
+  estimateVariantSizes: (token: string, buildId: string) =>
+    apiGet<Record<string, number>>(`/builds/${buildId}/variants/size-estimates`, authHeader(token)),
+  estimateExportSize: (token: string, buildId: string, config: PlaygroundConfig) =>
+    apiPost<{ sizeBytes: number; baseBytes: number; extraBytes: number }>(`/builds/${buildId}/size-estimate`, { config }, authHeader(token)),
   duplicateVariant: (token: string, id: string) => apiPost<ApiVariant>(`/variants/${id}/duplicate`, {}, authHeader(token)),
 
   /** gameId bỏ trống = duyệt media của mọi game (kho dùng chéo game) — xem MediaService.list() ở backend. */

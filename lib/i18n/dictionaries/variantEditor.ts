@@ -4,6 +4,8 @@ export const variantEditorDict = defineDict(
   {
     backToConcept: "Back to concept",
     variantFallback: "Variant",
+    estimatedSize: "Est. size",
+    estimatedSizeHint: "Estimated size of the exported HTML file (approximate; each network may differ slightly)",
     saved: "✓ Saved",
     share: "Share",
     saving: "Saving...",
@@ -25,6 +27,8 @@ export const variantEditorDict = defineDict(
   {
     backToConcept: "Quay lại concept",
     variantFallback: "Biến thể",
+    estimatedSize: "Dung lượng ước tính",
+    estimatedSizeHint: "Dung lượng ước tính của file HTML khi export (xấp xỉ; mỗi network có thể lệch nhẹ)",
     saved: "✓ Đã lưu",
     share: "Share",
     saving: "Đang lưu...",

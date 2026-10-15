@@ -35,6 +35,11 @@ export function useBuildDetailPage() {
     mutate: mutateVariants,
   } = useSWR(session ? swrKeys.variants(buildId) : null, () => api.listVariants(session!.accessToken, buildId));
 
+  // Dung lượng ước tính của từng biến thể (cột "Dung lượng" trong bảng) — không chặn UI, lần đầu có thể mất vài giây.
+  const { data: variantSizes } = useSWR(session && build?.status === "SUCCESS" ? swrKeys.variantSizes(buildId) : null, () =>
+    api.estimateVariantSizes(session!.accessToken, buildId),
+  );
+
   const { data: networks } = useSWR(session && build?.status === "SUCCESS" ? swrKeys.networks() : null, () =>
     api.listNetworks(session!.accessToken),
   );
@@ -249,6 +254,7 @@ export function useBuildDetailPage() {
     build: build ?? null,
     game,
     variants: variants ?? null,
+    variantSizes,
     error,
     canCreateVariant,
     canCreateConcept,

@@ -405,7 +405,25 @@ export function useVariantEditorPage() {
     }
   };
 
+  // Dung lượng ước lượng của file export theo config ĐANG sửa (chưa cần lưu) — debounce để không gọi API mỗi lần kéo slider.
+  const [estimatedSize, setEstimatedSize] = useState<number | null>(null);
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      api
+        .estimateExportSize(session.accessToken, buildId, config)
+        .then((r) => !cancelled && setEstimatedSize(r.sizeBytes))
+        .catch(() => !cancelled && setEstimatedSize(null));
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [session, buildId, config]);
+
   return {
+    estimatedSize,
     session,
     buildId,
     build: build ?? null,

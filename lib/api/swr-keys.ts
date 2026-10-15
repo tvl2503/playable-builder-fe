@@ -11,6 +11,7 @@ export const swrKeys = {
   builds: (gameId: string) => `builds:${gameId}`,
   build: (id: string) => `build:${id}`,
   variants: (buildId: string) => `variants:${buildId}`,
+  variantSizes: (buildId: string) => `variant-sizes:${buildId}`,
   variant: (id: string) => `variant:${id}`,
   networks: () => "networks",
   /** filter = JSON.stringify({gameId?, kind?, search?}) đã chuẩn hoá — xem useMediaLibraryPage.ts. */

@@ -23,7 +23,8 @@ export const routes = {
   buildVariantNew: (buildId: string) => `/builds/${buildId}/variants/new`,
   buildVariant: (buildId: string, variantId: string) => `/builds/${buildId}/variants/${variantId}`,
 
-  /** Prefix dùng để nhận diện route public trong useAuthGate.ts — giữ chung gốc với share() để không lệch nhau. */
+  /** Prefix dùng để nhận diện route public trong components/AuthGate/useAuthGate.ts — giữ chung gốc với share() để không lệch nhau. */
   sharePrefix: "/share/",
+  share2Prefix: "/share2/",
   share: (token: string) => `/share/${token}`,
 };

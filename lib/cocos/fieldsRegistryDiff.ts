@@ -11,7 +11,7 @@ function fieldKey(match: PlaygroundMatch): string {
   return `${match.className}::${match.propName}`;
 }
 
-/** Phải khớp groupKey() ở components/usePlaygroundConfigForm.ts (chính là playgroundGroupKey() bên backend). */
+/** Phải khớp groupKey() ở components/PlaygroundConfigForm/usePlaygroundConfigForm.ts (chính là playgroundGroupKey() bên backend). */
 function groupKey(match: PlaygroundMatch): string {
   return match.options.section || match.className;
 }

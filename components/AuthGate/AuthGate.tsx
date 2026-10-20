@@ -2,9 +2,9 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { PageLoading } from "./Spinner";
-import { Sidebar } from "./Sidebar";
-import { MenuIcon } from "./icons";
+import { PageLoading } from "../Spinner";
+import { Sidebar } from "../Sidebar";
+import { MenuIcon } from "../icons";
 import { useAuthGate } from "./useAuthGate";
 
 /**
@@ -20,7 +20,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return <PageLoading />;
   }
 
-  if (isPublicRoute) return <>{children}</>;
+  if (isPublicRoute) return <div className="w-full h-full">{children}</div>;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col md:flex-row">

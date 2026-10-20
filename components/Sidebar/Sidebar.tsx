@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button } from "./common";
-import { BookIcon, ChevronRightIcon, GamesIcon, ImageIcon, LayersIcon, LogoutIcon, MoonIcon, ShieldIcon, SunIcon, UnityIcon } from "./icons";
+import { Button } from "../common";
+import { BookIcon, ChevronRightIcon, GamesIcon, ImageIcon, LayersIcon, LogoutIcon, MoonIcon, ShieldIcon, SunIcon, UnityIcon } from "../icons";
 import { useSidebar, type SidebarNavItem } from "./useSidebar";
 
 const ICONS: Record<SidebarNavItem["id"], typeof GamesIcon> = {

@@ -14,7 +14,7 @@
  * `groupKey` = the field's @playgroundField `section` option when given
  * (e.g. "Background Music"), else the component's class name — see
  * playgroundGroupKey() in src/pipeline/playgroundFields.ts, which this must
- * mirror exactly (see groupKey() in components/usePlaygroundConfigForm.ts, which
+ * mirror exactly (see groupKey() in components/PlaygroundConfigForm/usePlaygroundConfigForm.ts, which
  * builds the `PlaygroundConfig` object this file's caller — useVariantEditorPage.ts — passes in).
  * Note a section name is a human-friendly UI-grouping label, not guaranteed
  * unique — two different classes CAN share a section, in which case their

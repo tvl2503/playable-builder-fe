@@ -3,7 +3,7 @@ import { Card } from "@/components/common";
 import { resolveSharedPreviewLink, type ResolvedSharedPreview } from "@/lib/api";
 
 /**
- * Route public (không cần đăng nhập playable-tool — xem useAuthGate.ts's PUBLIC_ROUTE_PREFIXES) — nút
+ * Route public (không cần đăng nhập playable-tool — xem components/AuthGate/useAuthGate.ts's PUBLIC_ROUTE_PREFIXES) — nút
  * "Share" ở builds/[id] và variant editor tạo ra link dạng /share/<token>. Server Component: resolve
  * token ở server (không qua fetch()/CORS phía client) ra 1 presigned URL (đã vá sẵn config nếu là share
  * biến thể — xem SharedPreviewLinksService.resolve()), rồi redirect (307) THẲNG sang URL đó — người xem

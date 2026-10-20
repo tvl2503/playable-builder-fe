@@ -32,7 +32,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-950">
+    <div className="w-full h-full">
       <iframe src={resolved.url} title={resolved.buildName}  className="h-full w-full m-0 p-0 border-0 relative" />
     </div>
   );

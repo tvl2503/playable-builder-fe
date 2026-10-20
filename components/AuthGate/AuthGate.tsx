@@ -20,7 +20,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return <PageLoading />;
   }
 
-  if (isPublicRoute) return <div className="w-full h-full">{children}</div>;
+  if (isPublicRoute) return <>{children}</>;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col md:flex-row">

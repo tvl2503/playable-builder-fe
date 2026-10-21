@@ -65,7 +65,7 @@ export function MediaUploadDialog({ file, onCancel, onConfirm }: Props) {
 
   const IMAGE_FORMATS: { value: ImageFormatMode; label: string }[] = [
     { value: "keep", label: t("formatKeep") },
-    { value: "lossless", label: t("formatLossless") },
+    { value: "webp", label: t("formatWebp") },
     { value: "lossy", label: t("formatLossy") },
   ];
 

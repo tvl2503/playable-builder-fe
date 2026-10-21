@@ -1,4 +1,4 @@
-export type ImageFormatMode = "keep" | "lossless" | "lossy";
+export type ImageFormatMode = "keep" | "webp" | "lossy";
 
 /** "original" = không giới hạn; số = cạnh dài nhất tối đa (px) — chỉ thu nhỏ, không phóng to ảnh gốc nhỏ hơn mức này. */
 export type MaxResolution = "original" | 2048 | 1024 | 512;
@@ -21,7 +21,7 @@ export function loadImage(file: File): Promise<{ img: HTMLImageElement; url: str
 
 /** Canvas chỉ encode được png/jpeg/webp — định dạng khác (gif, svg...) fallback về png khi phải re-encode thật sự. */
 function resolveOutputMimeType(mode: ImageFormatMode, originalType: string): string {
-  if (mode === "lossless") return "image/png";
+  if (mode === "webp") return "image/webp";
   if (mode === "lossy") return "image/jpeg";
   return originalType === "image/jpeg" || originalType === "image/webp" ? originalType : "image/png";
 }
@@ -58,7 +58,7 @@ export async function processImage(file: File, maxResolution: MaxResolution, mod
 
     const mimeType = resolveOutputMimeType(mode, file.type);
     const blob = await new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Không encode được ảnh"))), mimeType, mode === "lossy" ? LOSSY_QUALITY : undefined),
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Không encode được ảnh"))), mimeType, mode === "lossy" || mode === "webp" ? LOSSY_QUALITY : undefined),
     );
     return { blob, mimeType };
   } finally {

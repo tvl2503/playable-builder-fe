@@ -10,12 +10,14 @@ import {
   type PlaygroundFieldsRegistry,
   type PlaygroundFieldType,
   type PlaygroundMatch,
+  type PlaygroundScalarValue,
+  type PlaygroundValue,
   type PlaygroundVecValue,
 } from "@/lib/api";
 import { AudioPlayButton } from "@/components/AudioPlayButton";
 import { Button, Card, ColorInput, Input, NumberInput, Slider, Switch } from "@/components/common";
 import { MediaPicker } from "@/components/MediaPicker";
-import { ChevronRightIcon, ImageIcon, MusicIcon } from "@/components/icons";
+import { ChevronRightIcon, ImageIcon, MusicIcon, PlusIcon, TrashIcon } from "@/components/icons";
 import { swrKeys } from "@/lib/api/swr-keys";
 import { useT } from "@/lib/i18n/useT";
 import { usePlaygroundConfigForm } from "./usePlaygroundConfigForm";
@@ -36,8 +38,23 @@ interface Props {
 function inferFieldType(value: unknown): PlaygroundFieldType {
   if (typeof value === "boolean") return "boolean";
   if (typeof value === "number") return Number.isInteger(value) ? "integer" : "float";
+  if (Array.isArray(value)) return "array";
   return "string";
 }
+
+/** Kiểu phần tử của field "array" trên build cũ không có fieldType — đoán từ phần tử đầu của default (rỗng thì "number"). */
+function inferElementType(value: unknown): NonNullable<PlaygroundFieldTypeInfoLike["elementType"]> {
+  const first = Array.isArray(value) ? value.find((v) => typeof v === "number" && !Number.isInteger(v)) ?? value[0] : undefined;
+  if (first === undefined) return "number";
+  const type = inferFieldType(first);
+  if (type === "array") return "number";
+  if (first && typeof first === "object" && "x" in first && "y" in first) {
+    return "z" in first ? ("w" in first ? "vec4" : "vec3") : "vec2";
+  }
+  return type;
+}
+
+type PlaygroundFieldTypeInfoLike = NonNullable<PlaygroundMatch["fieldType"]>;
 
 /**
  * `current` là hex string "#rrggbb" khi đã có override (do chính input color này ghi), nhưng khi CHƯA có
@@ -93,7 +110,23 @@ export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnl
               );
             }
 
-            const typeInfo = match.fieldType ?? { type: inferFieldType(match.defaultLiteral?.value) };
+            const typeInfo: PlaygroundFieldTypeInfoLike = match.fieldType ?? {
+              type: inferFieldType(match.defaultLiteral?.value),
+              ...(Array.isArray(match.defaultLiteral?.value) && { elementType: inferElementType(match.defaultLiteral?.value) }),
+            };
+
+            if (typeInfo.type === "array") {
+              return (
+                <ArrayFieldInput
+                  key={match.propName}
+                  label={match.propName}
+                  typeInfo={typeInfo}
+                  current={current}
+                  readOnly={readOnly}
+                  onChange={(value) => setValue(group, match.propName, value)}
+                />
+              );
+            }
 
             if (typeInfo.type === "vec2" || typeInfo.type === "vec3" || typeInfo.type === "vec4") {
               return (
@@ -284,29 +317,126 @@ function VecFieldInput({
   readOnly?: boolean;
   onChange: (value: PlaygroundVecValue) => void;
 }) {
-  const vec = toVecValue(current, size);
-  const axes = VEC_AXES.slice(0, size);
-
   return (
     <div className="flex flex-col gap-1.5 rounded-lg px-1.5 py-1.5">
       <span className="truncate text-xs text-zinc-600 dark:text-zinc-400" title={label}>
         {label}
       </span>
-      {/* grid-cols-2 cho cả vec2/vec3/vec4 — vec3 (3 trục, lẻ) tự xuống hàng dưới ở trục cuối (Z) thay vì tràn ngang. */}
-      <div className="grid grid-cols-2 gap-1.5">
-        {axes.map((axis) => (
-          <label key={axis} className="flex items-center gap-1">
-            <span className="w-2.5 shrink-0 text-[10px] font-medium uppercase text-zinc-400">{axis}</span>
-            <NumberInput
-              className="w-30"
-              disabled={readOnly}
-              step={0.1}
-              value={vec[axis] ?? 0}
-              onChange={(value) => onChange({ ...vec, [axis]: value })}
-            />
-          </label>
-        ))}
+      <VecAxesInput size={size} current={current} readOnly={readOnly} onChange={onChange} />
+    </div>
+  );
+}
+
+/** Các ô trục x/y/z/w của 1 vec — dùng chung cho field vec đơn lẻ và từng phần tử vec trong field mảng. */
+function VecAxesInput({
+  size,
+  current,
+  readOnly,
+  onChange,
+}: {
+  size: 2 | 3 | 4;
+  current: unknown;
+  readOnly?: boolean;
+  onChange: (value: PlaygroundVecValue) => void;
+}) {
+  const vec = toVecValue(current, size);
+  const axes = VEC_AXES.slice(0, size);
+
+  return (
+    // grid-cols-2 cho cả vec2/vec3/vec4 — vec3 (3 trục, lẻ) tự xuống hàng dưới ở trục cuối (Z) thay vì tràn ngang.
+    <div className="grid grid-cols-2 gap-1.5">
+      {axes.map((axis) => (
+        <label key={axis} className="flex items-center gap-1">
+          <span className="w-2.5 shrink-0 text-[10px] font-medium uppercase text-zinc-400">{axis}</span>
+          <NumberInput
+            className="w-30"
+            disabled={readOnly}
+            step={0.1}
+            value={vec[axis] ?? 0}
+            onChange={(value) => onChange({ ...vec, [axis]: value })}
+          />
+        </label>
+      ))}
+    </div>
+  );
+}
+
+const VEC_ELEMENT_SIZE: Record<string, 2 | 3 | 4> = { vec2: 2, vec3: 3, vec4: 4 };
+
+/** Phần tử mới thêm vào mảng — giá trị "trung tính" theo kiểu phần tử (số thì kẹp vào min/max nếu có). */
+function newArrayItem(typeInfo: PlaygroundFieldTypeInfoLike): PlaygroundScalarValue {
+  const type = typeInfo.elementType ?? "number";
+  if (type === "boolean") return false;
+  if (type === "string") return "";
+  const vecSize = VEC_ELEMENT_SIZE[type];
+  if (vecSize) return toVecValue({}, vecSize);
+  const { min, max } = typeInfo;
+  let value = 0;
+  if (typeof min === "number") value = Math.max(value, min);
+  if (typeof max === "number") value = Math.min(value, max);
+  return value;
+}
+
+/** Field "array" — label + số phần tử + nút Thêm ở đầu khối, mỗi phần tử 1 hàng (input đúng elementType) kèm nút xoá. */
+function ArrayFieldInput({
+  label,
+  typeInfo,
+  current,
+  readOnly,
+  onChange,
+}: {
+  label: string;
+  typeInfo: PlaygroundFieldTypeInfoLike;
+  current: unknown;
+  readOnly?: boolean;
+  onChange: (value: PlaygroundValue) => void;
+}) {
+  const t = useT("playgroundConfigForm");
+  const items: PlaygroundScalarValue[] = Array.isArray(current) ? current : [];
+  const elementType = typeInfo.elementType ?? "number";
+  const vecSize = VEC_ELEMENT_SIZE[elementType];
+  const elementInfo: PlaygroundFieldTypeInfoLike = { type: elementType, slider: typeInfo.slider, min: typeInfo.min, max: typeInfo.max, step: typeInfo.step };
+
+  const setItem = (index: number, value: PlaygroundScalarValue) => onChange(items.map((item, i) => (i === index ? value : item)));
+
+  return (
+    <div className="flex flex-col gap-1.5 rounded-lg px-1.5 py-1.5">
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-xs text-zinc-600 dark:text-zinc-400" title={label}>
+          {label} <span className="text-zinc-400">· {t("arrayCount", { count: items.length })}</span>
+        </span>
+        {!readOnly && (
+          <Button type="button" variant="outline" size="sm" onClick={() => onChange([...items, newArrayItem(typeInfo)])}>
+            <PlusIcon className="h-3.5 w-3.5" />
+            {t("addItem")}
+          </Button>
+        )}
       </div>
+      {items.length === 0 && <span className="text-[11px] text-zinc-400">{t("emptyArray")}</span>}
+      {items.map((item, index) => (
+        <div key={index} className="flex items-start gap-2 rounded-lg border border-zinc-100 px-2 py-1.5 dark:border-zinc-800">
+          <span className="w-5 shrink-0 pt-1.5 text-[10px] tabular-nums text-zinc-400">{index}</span>
+          <div className="min-w-0 flex-1">
+            {vecSize ? (
+              <VecAxesInput size={vecSize} current={item} readOnly={readOnly} onChange={(value) => setItem(index, value)} />
+            ) : (
+              <FieldInput typeInfo={elementInfo} current={item} readOnly={readOnly} onChange={(value) => setItem(index, value)} />
+            )}
+          </div>
+          {!readOnly && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-zinc-400!"
+              title={t("removeItem")}
+              onClick={() => onChange(items.filter((_, i) => i !== index))}
+            >
+              <TrashIcon className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

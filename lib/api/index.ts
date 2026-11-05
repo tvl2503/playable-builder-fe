@@ -90,10 +90,12 @@ export interface ApiBuildArtifact {
 }
 
 /** Khớp PlaygroundFieldType/PlaygroundFieldTypeInfo ở playable-builder/src/pipeline/playgroundFields.ts. */
-export type PlaygroundFieldType = "boolean" | "integer" | "float" | "number" | "string" | "color" | "vec2" | "vec3" | "vec4";
+export type PlaygroundFieldType = "boolean" | "integer" | "float" | "number" | "string" | "color" | "vec2" | "vec3" | "vec4" | "array";
 
 export interface PlaygroundFieldTypeInfo {
   type: PlaygroundFieldType;
+  /** Chỉ có khi type = "array": kiểu của từng phần tử (min/max/step/slider bên dưới áp dụng cho phần tử đó). */
+  elementType?: Exclude<PlaygroundFieldType, "array">;
   slider?: boolean;
   min?: number;
   max?: number;
@@ -126,7 +128,12 @@ export interface PlaygroundFieldsRegistry {
   hooks: unknown[];
 }
 
-export type PlaygroundConfig = Record<string, Record<string, string | number | boolean | PlaygroundVecValue>>;
+export type PlaygroundScalarValue = string | number | boolean | PlaygroundVecValue;
+
+/** Giá trị override của 1 field: đơn lẻ, hoặc mảng các phần tử đơn lẻ (field type "array"). */
+export type PlaygroundValue = PlaygroundScalarValue | PlaygroundScalarValue[];
+
+export type PlaygroundConfig = Record<string, Record<string, PlaygroundValue>>;
 
 export type BuildStatus = "PENDING" | "PROCESSING" | "SUCCESS" | "FAILED";
 

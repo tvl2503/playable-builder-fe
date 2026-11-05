@@ -7,6 +7,10 @@ export const playgroundConfigFormDict = defineDict(
     change: "Change",
     choose: "Choose",
     clear: "Clear",
+    arrayCount: "{{count}} items",
+    addItem: "Add",
+    removeItem: "Remove item",
+    emptyArray: "Empty list",
   },
   {
     noFields: "Build này không có @playgroundField/@playgroundAsset nào để chỉnh.",
@@ -14,5 +18,9 @@ export const playgroundConfigFormDict = defineDict(
     change: "Đổi",
     choose: "Chọn",
     clear: "Xoá",
+    arrayCount: "{{count}} phần tử",
+    addItem: "Thêm",
+    removeItem: "Xoá phần tử",
+    emptyArray: "Danh sách trống",
   },
 );

@@ -314,7 +314,22 @@ export function useVariantEditorPage() {
             try {
               const asset = await api.getMedia(session.accessToken, mediaId);
               url = asset.url;
-              mediaUrlCache.current.set(mediaId, url);
+              // Đổi sang data: URI NGAY ở trang cha (y hệt đường export/share): presigned URL đưa thẳng vào iframe
+              // chập chờn vì (1) hết hạn ~1h trong khi cache này sống cả phiên, (2) ảnh từng được tải không-CORS
+              // (thumbnail MediaPicker) nằm trong cache HTTP làm lần tải crossOrigin sau bị từ chối. no-store bỏ qua
+              // cache HTTP; fetch lỗi thì fallback về URL như cũ.
+              try {
+                const blob = await (await fetch(url, { cache: "no-store" })).blob();
+                url = await new Promise<string>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => resolve(reader.result as string);
+                  reader.onerror = () => reject(reader.error);
+                  reader.readAsDataURL(blob);
+                });
+                mediaUrlCache.current.set(mediaId, url);
+              } catch {
+                // không cache URL presigned (sẽ hết hạn) — lần debounce sau thử lại từ đầu
+              }
             } catch {
               return null; // asset bị xoá/lỗi tải -> bỏ override, giữ nguyên asset gốc của engine
             }

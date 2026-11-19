@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { useRequireAuth } from "@/lib/auth/use-require-auth";
@@ -30,10 +30,17 @@ export function useBuildDetailPage() {
   });
 
   const {
-    data: variants,
+    data: rawVariants,
     error: variantsError,
     mutate: mutateVariants,
   } = useSWR(session ? swrKeys.variants(buildId) : null, () => api.listVariants(session!.accessToken, buildId));
+
+  // Biến thể sửa gần nhất lên đầu. Backend đã trả đúng thứ tự này, nhưng sort lại ở đây để các mutate cục bộ
+  // (đổi tên, nhân bản... với revalidate:false) không làm lệch thứ tự. updatedAt là ISO string nên so chuỗi là đủ.
+  const variants = useMemo(
+    () => rawVariants && [...rawVariants].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    [rawVariants],
+  );
 
   // Dung lượng ước tính của từng biến thể (cột "Dung lượng" trong bảng) — không chặn UI, lần đầu có thể mất vài giây.
   const { data: variantSizes } = useSWR(session && build?.status === "SUCCESS" ? swrKeys.variantSizes(buildId) : null, () =>

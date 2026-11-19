@@ -39,6 +39,8 @@ export interface ApiGame {
   androidUrl: string | null;
   iosUrl: string | null;
   iconUrl: string | null;
+  /** Chỉ `listGames` trả field này — user hiện tại có đánh dấu sao (Favourite) game này không. */
+  isFavorite?: boolean;
 }
 
 /** 1 row "tất cả game của công ty" (import từ file JSON export ngoài, xem playable-builder/src/scripts/seed-game-catalog.ts). */
@@ -221,6 +223,14 @@ export const api = {
   me: (token: string) => apiGet<ApiUser>("/auth/me", authHeader(token)),
 
   listGames: (token: string) => apiGet<ApiGame[]>("/games", authHeader(token)),
+  /** Đánh dấu / bỏ sao 1 game — lưu riêng theo user đang đăng nhập. */
+  setGameFavorite: (token: string, id: string, favorite: boolean) =>
+    favorite
+      ? apiPut<void>(`/games/${id}/favorite`, undefined, authHeader(token))
+      : apiDelete<void>(`/games/${id}/favorite`, authHeader(token)),
+  /** Lưu thứ tự nhóm "Yêu thích" (kéo-thả ở /creatives) — riêng theo user đang đăng nhập. */
+  setFavoriteGameOrder: (token: string, gameIds: string[]) =>
+    apiPut<void>("/games/order", { gameIds }, authHeader(token)),
   getGame: (token: string, id: string) =>
     apiGet<ApiGame>(`/games/${id}`, authHeader(token)),
 

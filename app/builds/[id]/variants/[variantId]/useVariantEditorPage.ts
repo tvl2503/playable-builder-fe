@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import useSWR from "swr";
+import useSWR, { mutate as mutateGlobal } from "swr";
 import {
   api,
   fetchArtifactBlob,
@@ -184,6 +184,7 @@ export function useVariantEditorPage() {
       session?.user.id,
     );
   const canShare = can(session?.permissions ?? null, "share");
+  const canDuplicate = !!variant && can(session?.permissions ?? null, "variant:create");
 
   // Seed config + autoFilledKeys từ variant đúng 1 lần mỗi khi ĐỔI variant.
   useEffect(() => {
@@ -420,6 +421,44 @@ export function useVariantEditorPage() {
     }
   };
 
+  /** Đổi tên biến thể ngay trong editor — chỉ đổi `name`, không đụng tới config đang sửa dở (chưa lưu). Lỗi (vd trùng tên) để PromptDialog tự hiện. */
+  const handleRename = async (name: string) => {
+    if (!session) return;
+    const updated = await api.renameVariant(session.accessToken, variantId, name);
+    mutateVariant(updated, { revalidate: false });
+    // Danh sách biến thể ở trang concept cũng phải thấy tên mới khi quay lại.
+    mutateGlobal(swrKeys.variants(buildId));
+  };
+
+  const [duplicating, setDuplicating] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+
+  /**
+   * Nhân bản biến thể rồi chuyển sang editor của bản sao. Backend chỉ copy config ĐÃ LƯU, nên nếu đang có thay
+   * đổi chưa lưu thì ghi luôn config đang thấy trên màn hình vào bản sao (bản gốc giữ nguyên như lúc lưu gần nhất).
+   */
+  const handleDuplicate = async () => {
+    if (!session || !variant) return;
+    setDuplicating(true);
+    setDuplicateError(null);
+    try {
+      const created = await api.duplicateVariant(session.accessToken, variantId);
+      if (JSON.stringify(config) !== JSON.stringify(variant.config)) {
+        await api.updateVariantConfig(
+          session.accessToken,
+          created.id,
+          config,
+          Array.from(autoFilledKeysRef.current),
+        );
+      }
+      mutateGlobal(swrKeys.variants(buildId));
+      router.push(routes.buildVariant(buildId, created.id));
+    } catch (e) {
+      setDuplicateError(e instanceof Error ? e.message : String(e));
+      setDuplicating(false);
+    }
+  };
+
   // Dung lượng ước lượng của file export theo config ĐANG sửa (chưa cần lưu) — debounce để không gọi API mỗi lần kéo slider.
   const [estimatedSize, setEstimatedSize] = useState<number | null>(null);
   useEffect(() => {
@@ -459,6 +498,12 @@ export function useVariantEditorPage() {
     saveError,
     saved,
     handleSave,
+    handleRename,
+
+    canDuplicate,
+    duplicating,
+    duplicateError,
+    handleDuplicate,
 
     shareLink,
     sharing,

@@ -8,6 +8,11 @@ export const gamesListDict = defineDict(
     noGamesTitle: "No games yet",
     noGamesDescription: "Create your first game to start uploading and managing playable ads.",
     createGameShort: "+ Create game",
+    favorites: "Favourites",
+    allGames: "All games",
+    addFavorite: "Add to favourites",
+    removeFavorite: "Remove from favourites",
+    dragToReorder: "Drag to reorder",
   },
   {
     title: "Creatives",
@@ -16,5 +21,10 @@ export const gamesListDict = defineDict(
     noGamesTitle: "Chưa có game nào",
     noGamesDescription: "Tạo game đầu tiên để bắt đầu upload và quản lý playable ads.",
     createGameShort: "+ Tạo game",
+    favorites: "Yêu thích",
+    allGames: "Tất cả game",
+    addFavorite: "Đánh dấu yêu thích",
+    removeFavorite: "Bỏ yêu thích",
+    dragToReorder: "Kéo để sắp xếp",
   },
 );

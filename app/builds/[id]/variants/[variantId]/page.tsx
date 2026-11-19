@@ -3,9 +3,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-import { Button, Dialog, Input, Select, Switch } from "@/components/common";
+import { Button, Dialog, Input, PromptDialog, Select, Switch } from "@/components/common";
 import {
   ArrowLeftIcon,
+  DuplicateIcon,
+  EditIcon,
   LayersIcon,
   ReloadIcon,
   ShareIcon,
@@ -40,6 +42,11 @@ export default function VariantEditorPage() {
     saveError,
     saved,
     handleSave,
+    handleRename,
+    canDuplicate,
+    duplicating,
+    duplicateError,
+    handleDuplicate,
 
     shareLink,
     sharing,
@@ -64,6 +71,7 @@ export default function VariantEditorPage() {
   const [rotated, setRotated] = useState(false);
   const [reloadNonce, setReloadNonce] = useState(0);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
   /**
@@ -190,6 +198,37 @@ export default function VariantEditorPage() {
             <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
               {variant?.name ?? t("variantFallback")}
             </h1>
+
+            {canEdit && variant && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setRenameOpen(true)}
+                className="text-zinc-400! hover:bg-zinc-100! hover:text-zinc-700! dark:hover:bg-zinc-800! dark:hover:text-zinc-200!"
+                title={t("renameVariant")}
+              >
+                <EditIcon className="h-4 w-4" />
+              </Button>
+            )}
+
+            {canDuplicate && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleDuplicate}
+                disabled={duplicating}
+                className="text-zinc-400! hover:bg-zinc-100! hover:text-zinc-700! dark:hover:bg-zinc-800! dark:hover:text-zinc-200!"
+                title={t("duplicateVariant")}
+              >
+                {duplicating ? <Spinner className="h-4 w-4" /> : <DuplicateIcon className="h-4 w-4" />}
+              </Button>
+            )}
+
+            {duplicateError && (
+              <span className="text-xs text-red-600 dark:text-red-400">{duplicateError}</span>
+            )}
           </div>
         </div>
 
@@ -381,6 +420,15 @@ export default function VariantEditorPage() {
           </div>
         </div>
       )}
+
+      <PromptDialog
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        title={t("renameVariant")}
+        label={t("variantNameLabel")}
+        initialValue={variant?.name ?? ""}
+        onSubmit={handleRename}
+      />
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} title={t("shareDialogTitle")}>
         {sharing && !shareLink && (

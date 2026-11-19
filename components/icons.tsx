@@ -143,6 +143,40 @@ export function DuplicateIcon({ className = "h-4 w-4" }: IconProps) {
   );
 }
 
+/** 6 chấm — tay nắm kéo-thả. */
+export function GripIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="9" cy="6" r="1.5" />
+      <circle cx="15" cy="6" r="1.5" />
+      <circle cx="9" cy="12" r="1.5" />
+      <circle cx="15" cy="12" r="1.5" />
+      <circle cx="9" cy="18" r="1.5" />
+      <circle cx="15" cy="18" r="1.5" />
+    </svg>
+  );
+}
+
+/** `filled` = sao đặc (đã Favourite), mặc định chỉ viền. */
+export function StarIcon({ className = "h-4 w-4", filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg
+      className={className}
+      fill={filled ? "currentColor" : "none"}
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M11.48 3.5a.56.56 0 011.04 0l2.13 5.11a.56.56 0 00.47.35l5.52.44c.5.04.7.66.32.99l-4.2 3.6a.56.56 0 00-.18.55l1.28 5.39a.56.56 0 01-.84.61l-4.73-2.89a.56.56 0 00-.59 0l-4.73 2.89a.56.56 0 01-.84-.61l1.28-5.39a.56.56 0 00-.18-.55l-4.2-3.6a.56.56 0 01.32-.99l5.52-.44a.56.56 0 00.47-.35l2.13-5.11z"
+      />
+    </svg>
+  );
+}
+
 export function MoveIcon({ className = "h-4 w-4" }: IconProps) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">

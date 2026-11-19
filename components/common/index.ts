@@ -15,4 +15,6 @@ export { default as Select } from "./Select";
 export { default as Slider } from "./Slider";
 export { default as Switch } from "./Switch";
 export { PromptDialog } from "./PromptDialog";
+export { SortableGrid } from "./SortableGrid";
+export { SortableGridHandle, useSortableItemDragging } from "./SortableGrid";
 export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "./Table";

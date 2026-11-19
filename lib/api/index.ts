@@ -102,12 +102,21 @@ export type PlaygroundFieldType =
   | "vec2"
   | "vec3"
   | "vec4"
-  | "array";
+  | "array"
+  | "enum";
+
+/** 1 member của TS enum — khớp PlaygroundEnumOption ở playgroundFields.ts. */
+export interface PlaygroundEnumOption {
+  name: string;
+  value: number | string;
+}
 
 export interface PlaygroundFieldTypeInfo {
   type: PlaygroundFieldType;
   /** Chỉ có khi type = "array": kiểu của từng phần tử (min/max/step/slider bên dưới áp dụng cho phần tử đó). */
-  elementType?: Exclude<PlaygroundFieldType, "array">;
+  elementType?: Exclude<PlaygroundFieldType, "array" | "enum">;
+  /** Chỉ có khi type = "enum": các lựa chọn theo thứ tự khai báo — form hiện dropdown theo `name`, lưu `value`. */
+  enumOptions?: PlaygroundEnumOption[];
   slider?: boolean;
   min?: number;
   max?: number;
@@ -133,6 +142,21 @@ export interface PlaygroundMatch {
   assetKind: string | null;
   /** Chỉ có ở kind "field" (null ở "asset") — dùng để PlaygroundConfigForm dựng đúng input. */
   fieldType: PlaygroundFieldTypeInfo | null;
+  /** `displayName` khai ở @playgroundField/@playgroundAsset hoặc @property — build scan trước khi có field này thì không có (undefined). */
+  displayName?: string | null;
+}
+
+/**
+ * Nhãn hiển thị của 1 field trong form: displayName (backend đã ưu tiên @playgroundField > @property) nếu có, không
+ * thì tên biến. Build cũ chưa có `displayName` thì vẫn đọc được `options.displayName` của @playgroundField.
+ */
+export function playgroundFieldLabel(match: Pick<PlaygroundMatch, "propName" | "options" | "displayName">): string {
+  const fromOptions = match.options.displayName;
+  return (
+    match.displayName ||
+    (typeof fromOptions === "string" && fromOptions.trim() ? fromOptions.trim() : null) ||
+    match.propName
+  );
 }
 
 export interface PlaygroundFieldsRegistry {

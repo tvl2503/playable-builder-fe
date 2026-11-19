@@ -46,7 +46,8 @@ constants/
   `slider:true` + đủ `min`/`max`), `ColorInput` (color) — không viết `<input>` thô trong form này; build cũ scan trước khi có field này thì
   `fieldType` là `null` — form tự đoán lại qua `inferFieldType()` (y hệt logic backend) để không vỡ với build cũ. Field `vec2`/`vec3`/`vec4` tách
   riêng khỏi `FieldInput` (component `VecFieldInput`) — giá trị là object `{x,y[,z][,w]}` (không phải hex string như color), hiện 2-4 `NumberInput`
-  cạnh nhau theo từng trục thay vì 1 input dùng chung.
+  cạnh nhau theo từng trục thay vì 1 input dùng chung. Field `"enum"` (TS enum) có `fieldType.enumOptions: [{name,value}]` → `EnumFieldInput`
+  (`Select` hiện `name`, lưu đúng `value` gốc — number hoặc string, `<option value>` dùng chỉ số để không bị ép kiểu).
 - **Export chọn nhiều config**: `builds/[id]/page.tsx`'s "Dùng config của" là multi-select (pill giống Ad network, không phải `<select>` đơn nữa)
   — `useBuildDetailPage.ts`'s `selectedVariantIds: string[]` (`""` = "Mặc định (engine)", cùng danh sách chọn với biến thể thật).
   `handleExport()` gọi `exportBuild()` ĐÚNG 1 LẦN với cả `networks` lẫn `selectedVariantIds` — backend (`GET /builds/:id/export?networks=...&variantIds=...`,

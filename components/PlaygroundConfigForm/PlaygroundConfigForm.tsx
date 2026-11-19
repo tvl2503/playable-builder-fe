@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { Collapsible } from "radix-ui";
 import {
   api,
+  playgroundFieldLabel,
   type MediaKind,
   type PlaygroundConfig,
   type PlaygroundFieldsRegistry,
@@ -15,7 +16,7 @@ import {
   type PlaygroundVecValue,
 } from "@/lib/api";
 import { AudioPlayButton } from "@/components/AudioPlayButton";
-import { Button, Card, ColorInput, Input, NumberInput, Slider, Switch } from "@/components/common";
+import { Button, Card, ColorInput, Input, NumberInput, Select, Slider, Switch } from "@/components/common";
 import { MediaPicker } from "@/components/MediaPicker";
 import { ChevronRightIcon, ImageIcon, MusicIcon, PlusIcon, TrashIcon } from "@/components/icons";
 import { swrKeys } from "@/lib/api/swr-keys";
@@ -35,7 +36,7 @@ interface Props {
 }
 
 /** Build cũ scan trước khi có fieldType (fieldsRegistry cũ lưu trong DB không có field này) — đoán lại y hệt logic phía backend, xem resolvePlaygroundFieldType() ở playgroundFields.ts. */
-function inferFieldType(value: unknown): PlaygroundFieldType {
+function inferFieldType(value: unknown): Exclude<PlaygroundFieldType, "enum"> {
   if (typeof value === "boolean") return "boolean";
   if (typeof value === "number") return Number.isInteger(value) ? "integer" : "float";
   if (Array.isArray(value)) return "array";
@@ -55,6 +56,12 @@ function inferElementType(value: unknown): NonNullable<PlaygroundFieldTypeInfoLi
 }
 
 type PlaygroundFieldTypeInfoLike = NonNullable<PlaygroundMatch["fieldType"]>;
+
+/** Hover nhãn: hiện kèm tên biến gốc khi nhãn đang là displayName, để dev vẫn tra ngược được ra code. */
+function fieldTooltip(match: PlaygroundMatch): string {
+  const label = playgroundFieldLabel(match);
+  return label === match.propName ? label : `${label} (${match.propName})`;
+}
 
 /**
  * `current` là hex string "#rrggbb" khi đã có override (do chính input color này ghi), nhưng khi CHƯA có
@@ -98,7 +105,7 @@ export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnl
               return (
                 <AssetFieldInput
                   key={match.propName}
-                  label={match.propName}
+                  label={playgroundFieldLabel(match)}
                   token={token}
                   gameId={gameId}
                   assetKind={match.assetKind}
@@ -119,7 +126,7 @@ export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnl
               return (
                 <ArrayFieldInput
                   key={match.propName}
-                  label={match.propName}
+                  label={playgroundFieldLabel(match)}
                   typeInfo={typeInfo}
                   current={current}
                   readOnly={readOnly}
@@ -132,7 +139,7 @@ export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnl
               return (
                 <VecFieldInput
                   key={match.propName}
-                  label={match.propName}
+                  label={playgroundFieldLabel(match)}
                   size={typeInfo.type === "vec2" ? 2 : typeInfo.type === "vec3" ? 3 : 4}
                   current={current}
                   readOnly={readOnly}
@@ -146,8 +153,11 @@ export function PlaygroundConfigForm({ fieldsRegistry, config, onChange, readOnl
                 key={match.propName}
                 className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
               >
-                <span className="min-w-0 flex-1 truncate text-zinc-600 dark:text-zinc-400" title={match.propName}>
-                  {match.propName}
+                <span
+                  className="min-w-0 flex-1 truncate text-zinc-600 dark:text-zinc-400"
+                  title={fieldTooltip(match)}
+                >
+                  {playgroundFieldLabel(match)}
                 </span>
                 <div className="shrink-0">
                   <FieldInput
@@ -441,6 +451,43 @@ function ArrayFieldInput({
   );
 }
 
+/**
+ * Field TS enum → dropdown hiện tên member (Skin1, Skin2...), lưu đúng `value` gốc (số với enum số, chuỗi với
+ * string enum) — vì vậy `<option value>` dùng chỉ số trong danh sách thay vì value, để không bị ép thành chuỗi.
+ * Giá trị hiện tại không khớp member nào (vd enum đổi sau khi Reupload) vẫn hiện thành 1 lựa chọn riêng, không âm thầm đổi.
+ */
+function EnumFieldInput({
+  options,
+  current,
+  readOnly,
+  onChange,
+}: {
+  options: { name: string; value: number | string }[];
+  current: unknown;
+  readOnly?: boolean;
+  onChange: (value: string | number) => void;
+}) {
+  const index = options.findIndex((o) => o.value === current);
+  return (
+    <Select
+      disabled={readOnly}
+      value={index >= 0 ? String(index) : ""}
+      onChange={(e) => {
+        const option = options[Number(e.target.value)];
+        if (option) onChange(option.value);
+      }}
+      className="w-36"
+    >
+      {index < 0 && <option value="">{current === undefined || current === null ? "—" : String(current)}</option>}
+      {options.map((o, i) => (
+        <option key={o.name} value={String(i)}>
+          {o.name}
+        </option>
+      ))}
+    </Select>
+  );
+}
+
 function FieldInput({
   typeInfo,
   current,
@@ -453,6 +500,10 @@ function FieldInput({
   onChange: (value: string | number | boolean) => void;
 }) {
   const { type, slider, min, max, step } = typeInfo;
+
+  if (type === "enum") {
+    return <EnumFieldInput options={typeInfo.enumOptions ?? []} current={current} readOnly={readOnly} onChange={onChange} />;
+  }
 
   if (type === "boolean") {
     return <Switch disabled={readOnly} checked={Boolean(current)} onChange={onChange} />;

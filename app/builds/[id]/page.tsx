@@ -24,6 +24,7 @@ import {
 import { EmptyState } from "@/components/EmptyState";
 import { PageLoading, Spinner } from "@/components/Spinner";
 import {
+  AlertIcon,
   ChevronRightIcon,
   DuplicateIcon,
   EditIcon,
@@ -355,6 +356,16 @@ export default function BuildDetailPage() {
               ))}
             </div>
 
+            {game && (!game.androidUrl || !game.iosUrl) && (
+              <p className="flex items-start gap-1.5 rounded-lg bg-amber-50 px-2.5 py-2 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                <AlertIcon className="mt-px h-3.5 w-3.5 shrink-0" />
+                <span>
+                  {t("missingStoreLinks", {
+                    platforms: [!game.androidUrl && "Android", !game.iosUrl && "iOS"].filter(Boolean).join(` ${t("and")} `),
+                  })}
+                </span>
+              </p>
+            )}
             {exportError && <p className="text-xs text-red-600 dark:text-red-400">{exportError}</p>}
             <Button
               type="button"

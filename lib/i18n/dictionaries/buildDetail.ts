@@ -20,6 +20,9 @@ export const buildDetailDict = defineDict(
     updatedAt: "Updated {{date}}",
     buildingNotice: "Building this concept, the page will update automatically when it's done...",
     exportHeading: "Export for ad network",
+    missingStoreLinks:
+      'Game has no {{platforms}} store link in "All Games" — that link will be left empty ("") in exported files.',
+    and: "and",
     useConfigOf: "Use config from (merged into a single export)",
     selectAll: "Select all",
     adNetwork: "Ad network",
@@ -81,6 +84,9 @@ export const buildDetailDict = defineDict(
     updatedAt: "Cập nhật {{date}}",
     buildingNotice: "Đang build concept này, trang sẽ tự cập nhật khi xong...",
     exportHeading: "Export cho ad network",
+    missingStoreLinks:
+      'Game chưa có link store {{platforms}} trong "All Games" — link đó sẽ để trống ("") trong file export.',
+    and: "và",
     useConfigOf: "Dùng config của (gộp chung vào 1 lần export)",
     selectAll: "Chọn tất cả",
     adNetwork: "Ad network",

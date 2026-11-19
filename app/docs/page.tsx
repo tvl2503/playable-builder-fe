@@ -68,10 +68,12 @@ export function playgroundAsset(options: PlaygroundAssetOptions = {}) {
 }
 `;
 
-const USAGE_CODE = `import { _decorator, Component, CCBoolean, CCFloat, CCInteger, CCString, Color, SpriteFrame } from "cc";
+const USAGE_CODE = `import { _decorator, Component, CCBoolean, CCInteger, CCString, Color, Enum, SpriteFrame } from "cc";
 import { playgroundField } from "./Lib/playgroundField";
 import { playgroundAsset } from "./Lib/playgroundAsset";
 const { ccclass, property } = _decorator;
+
+export enum SkinOption { Skin1, Skin2, Skin3 }
 
 @ccclass("GameSettings")
 export class GameSettings extends Component {
@@ -80,7 +82,7 @@ export class GameSettings extends Component {
   public showTimer: boolean = true;
 
   @property({ type: CCInteger, slide: true, min: 0, max: 100 })
-  @playgroundField({ section: "Timer", type: "integer" })
+  @playgroundField({ section: "Timer", type: "integer", displayName: "Time limit (s)" })
   public timeLimit: number = 30;
 
   @property(CCString)
@@ -90,6 +92,11 @@ export class GameSettings extends Component {
   @property(Color)
   @playgroundField({ section: "Theme" })
   public primaryColor: Color = new Color(255, 180, 0, 255);
+
+  // TS enum -> dropdown Skin1 / Skin2 / Skin3
+  @property({ type: Enum(SkinOption) })
+  @playgroundField({ section: "Theme", displayName: "Skin" })
+  public skin: SkinOption = SkinOption.Skin2;
 
   // Asset field: ảnh/audio - hệ thống tự nhận assetKind từ kiểu Cocos
   @property(SpriteFrame)
@@ -266,6 +273,11 @@ export default function DocsPage() {
                     <td className="px-3 py-2.5">{t("refTypeDesc")}</td>
                   </tr>
                   <tr>
+                    <td className="whitespace-nowrap px-3 py-2.5 font-mono text-[11px] text-primary">displayName</td>
+                    <td className="px-3 py-2.5 text-zinc-500">field + asset</td>
+                    <td className="px-3 py-2.5">{t("refDisplayNameDesc")}</td>
+                  </tr>
+                  <tr>
                     <td className="whitespace-nowrap px-3 py-2.5 font-mono text-[11px] text-primary">slider</td>
                     <td className="px-3 py-2.5 text-zinc-500">field (number)</td>
                     <td className="px-3 py-2.5">{t("refSliderDesc")}</td>
@@ -284,6 +296,11 @@ export default function DocsPage() {
                     <td className="whitespace-nowrap px-3 py-2.5 font-mono text-[11px] text-primary">{t("refAssetAuto")}</td>
                     <td className="px-3 py-2.5 text-zinc-500">asset</td>
                     <td className="px-3 py-2.5">{t("refAssetAutoDesc")}</td>
+                  </tr>
+                  <tr>
+                    <td className="whitespace-nowrap px-3 py-2.5 font-mono text-[11px] text-primary">{t("refEnumAuto")}</td>
+                    <td className="px-3 py-2.5 text-zinc-500">field</td>
+                    <td className="px-3 py-2.5">{t("refEnumAutoDesc")}</td>
                   </tr>
                 </tbody>
               </table>
@@ -307,6 +324,14 @@ export default function DocsPage() {
               <div>
                 <p className="font-medium text-zinc-800 dark:text-zinc-100">{t("troubleItem4Title")}</p>
                 <p className="mt-0.5 text-xs">{t("troubleItem4Desc")}</p>
+              </div>
+              <div>
+                <p className="font-medium text-zinc-800 dark:text-zinc-100">{t("troubleItem5Title")}</p>
+                <p className="mt-0.5 text-xs">{t("troubleItem5Desc")}</p>
+              </div>
+              <div>
+                <p className="font-medium text-zinc-800 dark:text-zinc-100">{t("troubleItem6Title")}</p>
+                <p className="mt-0.5 text-xs">{t("troubleItem6Desc")}</p>
               </div>
             </div>
           </Section>

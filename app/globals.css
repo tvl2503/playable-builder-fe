@@ -54,3 +54,13 @@ body {
   background: var(--primary);
   color: white;
 }
+
+/* ProgressBar (components/common) khi chưa biết % — thanh chạy qua lại. */
+@keyframes progress-indeterminate {
+  0% {
+    left: -33%;
+  }
+  100% {
+    left: 100%;
+  }
+}

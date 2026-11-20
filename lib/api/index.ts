@@ -402,8 +402,18 @@ export const api = {
       { config },
       authHeader(token),
     ),
-  duplicateVariant: (token: string, id: string) =>
-    apiPost<ApiVariant>(`/variants/${id}/duplicate`, {}, authHeader(token)),
+  /** Đổi tên + config cùng lúc trong 1 request (variant editor gọi lúc bấm Lưu). Key nào bỏ trống thì backend giữ nguyên. */
+  updateVariant: (
+    token: string,
+    id: string,
+    data: { name?: string; config?: PlaygroundConfig; autoFilledKeys?: string[] },
+  ) => apiPatch<ApiVariant>(`/variants/${id}`, data, authHeader(token)),
+  /** Body bỏ trống = copy y hệt bản nguồn, tên tự sinh "(copy)". Variant editor gửi kèm tên mới + config đang sửa. */
+  duplicateVariant: (
+    token: string,
+    id: string,
+    data: { name?: string; config?: PlaygroundConfig; autoFilledKeys?: string[] } = {},
+  ) => apiPost<ApiVariant>(`/variants/${id}/duplicate`, data, authHeader(token)),
 
   /** gameId bỏ trống = duyệt media của mọi game (kho dùng chéo game) — xem MediaService.list() ở backend. */
   listMedia: (
@@ -546,62 +556,86 @@ export async function openOrDownloadArtifact(
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
+/** Tiến độ export: `processing` = server đang ráp file (chưa có byte nào, không biết %); `downloading` = đang nhận file. */
+export type ExportProgress =
+  | { phase: "processing" }
+  | { phase: "downloading"; loaded: number; total: number | null };
+
+function fileNameFromContentDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const star = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (star) {
+    try {
+      return decodeURIComponent(star[1].trim());
+    } catch {
+      // rơi xuống filename= thường
+    }
+  }
+  const plain = /filename="?([^";]+)"?/i.exec(header);
+  return plain ? plain[1].trim() : null;
+}
+
 /**
- * Build on-demand cho 1/nhiều network × 1/nhiều biến thể được chọn CÙNG LÚC (1 request duy nhất, không
- * lưu lại trên server — xem builds.service.ts's exportBuild) rồi tải thẳng về máy — luôn tải file, không
- * mở tab preview (xem openVariantPreview() riêng cho mục đích xem trước). Tổng cộng 1 file (1 network × 1
- * biến thể) -> trả đúng file đó (html/zip); nhiều hơn -> server tự gộp hết vào 1 zip. `variantIds`: `""` =
- * "Mặc định (engine)", còn lại là id biến thể thật — khớp đúng kiểu `selectedVariantIds` ở
- * useBuildDetailPage.ts, không cần transform gì thêm trước khi gọi.
+ * Build on-demand cho 1/nhiều network × 1/nhiều biến thể được chọn CÙNG LÚC (1 request duy nhất, không lưu lại trên
+ * server — xem builds.service.ts's exportBuild) rồi lưu về máy. 1 file (1 network × 1 biến thể) -> đúng file đó
+ * (html/zip); nhiều hơn -> server gộp hết vào 1 zip. `variantIds`: `""` = "Mặc định (engine)".
  *
- * KHÔNG fetch() rồi blob nữa (cách cũ: tải hết file vào bộ nhớ trước, không có progress gì, xong mới lưu
- * gần như tức thì) — 2 bước: (1) xin 1 token tải ngắn hạn (60s, xem export-download-token.service.ts
- * bên backend) qua fetch() có Authorization header như bình thường; (2) cho TRÌNH DUYỆT tự điều hướng
- * thẳng tới URL tải kèm token đó — Chrome/Firefox/Safari tự nhận `Content-Disposition: attachment` và xử
- * lý y hệt 1 download thật (hiện trong lịch sử download, có progress, resume được).
- *
- * Điều hướng bằng click 1 thẻ `<a target="_blank">`, KHÔNG dùng `<iframe hidden>` — đã thử iframe ẩn
- * trước (không mở tab nào cả) nhưng Chrome coi download bắn ra từ iframe ẩn, không gắn trực tiếp với 1
- * cú click thật của user, là "download tự động/âm thầm" và ÂM THẦM CHẶN LUÔN (không báo lỗi gì, trông y
- * hệt như không có chuyện gì xảy ra) — đây là cơ chế chống fingerprint/malware tải file lén của Chrome,
- * không phải bug ở code này. `<a target="_blank">` vẫn bị flash 1 tab trống trong chốc lát (tab tự đóng
- * ngay khi response là `Content-Disposition: attachment`) nhưng không bị chặn, nên đánh đổi lấy độ tin
- * cậy. Cũng KHÔNG dùng `window.location.href`/`window.open()`: `window.open()` sau 1 `await` dễ bị trình
- * duyệt chặn như popup; `window.location.href` thì nếu server lỡ trả lỗi thay vì file sẽ mất luôn trang
- * SPA hiện tại (điều hướng hẳn sang xem JSON lỗi) — click thẻ `<a>` tránh được cả 2 rủi ro này.
- * Route tải (`builds/:id/export-download`, ExportDownloadController) không gắn được Authorization header
- * qua điều hướng thường nên tự verify bằng token này thay vì JwtAuthGuard.
+ * Chạy NGAY TRÊN TRANG hiện tại (không mở tab mới như trước): fetch `GET /builds/:id/export` có Authorization, đọc
+ * body theo stream để báo % qua `onProgress` (tổng lấy từ Content-Length), nhận đủ thì lưu bằng `<a download>` trỏ
+ * blob URL — download từ blob cùng trang không bị Chrome chặn, chỉ tải đúng 1 lần. Giai đoạn server đang ráp file
+ * thì chưa có byte nào nên chỉ báo `processing` (không có %). Tên file lấy từ Content-Disposition (CORS đã expose).
  */
 export async function exportBuild(
   token: string,
   buildId: string,
   networks: string[],
   variantIds: string[],
+  onProgress?: (progress: ExportProgress) => void,
 ): Promise<void> {
-  const tokenRes = await fetch(`${API_URL}/builds/${buildId}/export-token`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!tokenRes.ok) {
-    const body = await tokenRes.json().catch(() => null);
-    throw new Error(
-      body?.message || `Export thất bại (HTTP ${tokenRes.status})`,
-    );
-  }
-  const { token: downloadToken } = (await tokenRes.json()) as { token: string };
-
   const params = new URLSearchParams({
     networks: networks.join(","),
     variantIds: variantIds.join(","),
-    token: downloadToken,
   });
+  onProgress?.({ phase: "processing" });
+  const res = await fetch(`${API_URL}/builds/${buildId}/export?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message || `Export thất bại (HTTP ${res.status})`);
+  }
 
+  const totalHeader = Number(res.headers.get("Content-Length"));
+  const total = Number.isFinite(totalHeader) && totalHeader > 0 ? totalHeader : null;
+  const contentType = res.headers.get("Content-Type") ?? "application/octet-stream";
+  const fileName = fileNameFromContentDisposition(res.headers.get("Content-Disposition")) ?? `export-${buildId}`;
+
+  let blob: Blob;
+  if (res.body) {
+    const reader = res.body.getReader();
+    const chunks: Uint8Array<ArrayBuffer>[] = [];
+    let loaded = 0;
+    onProgress?.({ phase: "downloading", loaded, total });
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      loaded += value.byteLength;
+      onProgress?.({ phase: "downloading", loaded, total });
+    }
+    blob = new Blob(chunks, { type: contentType });
+  } else {
+    blob = await res.blob();
+  }
+
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = `${API_URL}/builds/${buildId}/export-download?${params.toString()}`;
-  a.target = "_blank";
-  a.rel = "noopener";
+  a.href = url;
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 /** Mở tab mới xem bản single-html gốc đã vá config của 1 variant — dùng cho nút "Xem nhanh" ở danh sách biến thể. */

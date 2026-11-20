@@ -42,11 +42,14 @@ export default function VariantEditorPage() {
     saveError,
     saved,
     handleSave,
+    canSave,
+    displayName,
+    hasUnsavedName,
     handleRename,
     canDuplicate,
-    duplicating,
-    duplicateError,
-    handleDuplicate,
+    duplicateMode,
+    startDuplicate,
+    cancelDuplicate,
 
     shareLink,
     sharing,
@@ -196,10 +199,19 @@ export default function VariantEditorPage() {
             <LayersIcon className="h-5 w-5 text-primary" />
 
             <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-              {variant?.name ?? t("variantFallback")}
+              {displayName ?? t("variantFallback")}
             </h1>
 
-            {canEdit && variant && (
+            {duplicateMode && (
+              <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-medium text-primary">
+                {t("duplicateDraft")}
+              </span>
+            )}
+            {!duplicateMode && hasUnsavedName && (
+              <span className="text-[11px] text-amber-600 dark:text-amber-400">{t("nameNotSaved")}</span>
+            )}
+
+            {(canEdit || duplicateMode) && variant && (
               <Button
                 type="button"
                 variant="ghost"
@@ -212,27 +224,31 @@ export default function VariantEditorPage() {
               </Button>
             )}
 
-            {canDuplicate && (
+            {canDuplicate && !duplicateMode && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={handleDuplicate}
-                disabled={duplicating}
+                onClick={() => {
+                  startDuplicate();
+                  setRenameOpen(true);
+                }}
                 className="text-zinc-400! hover:bg-zinc-100! hover:text-zinc-700! dark:hover:bg-zinc-800! dark:hover:text-zinc-200!"
                 title={t("duplicateVariant")}
               >
-                {duplicating ? <Spinner className="h-4 w-4" /> : <DuplicateIcon className="h-4 w-4" />}
+                <DuplicateIcon className="h-4 w-4" />
               </Button>
             )}
 
-            {duplicateError && (
-              <span className="text-xs text-red-600 dark:text-red-400">{duplicateError}</span>
+            {duplicateMode && (
+              <Button type="button" variant="ghost" size="sm" onClick={cancelDuplicate} disabled={saving}>
+                {t("cancelDuplicate")}
+              </Button>
             )}
           </div>
         </div>
 
-        {(canEdit || canShare) && (
+        {(canSave || canShare) && (
           <div className="flex flex-wrap items-center gap-3">
             {estimatedSize !== null && (
               <span
@@ -262,14 +278,14 @@ export default function VariantEditorPage() {
               </Button>
             )}
 
-            {canEdit && (
+            {canSave && (
               <Button
                 type="button"
                 onClick={handleSave}
                 disabled={!previewUrl}
                 loading={saving}
               >
-                {saving ? t("saving") : t("saveVariant")}
+                {saving ? t("saving") : duplicateMode ? t("saveDuplicate") : t("saveVariant")}
               </Button>
             )}
           </div>
@@ -400,7 +416,7 @@ export default function VariantEditorPage() {
               {t("editPanelHeading")}
             </h2>
 
-            {!canEdit && (
+            {!canSave && (
               <p className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-700 dark:bg-amber-950 dark:text-amber-300">
                 {t("readOnlyNotice")}
               </p>
@@ -412,7 +428,7 @@ export default function VariantEditorPage() {
               }
               config={config}
               onChange={handleConfigChange}
-              readOnly={!canEdit}
+              readOnly={!canSave}
               token={session.accessToken}
               gameId={build?.gameId ?? ""}
               resolvedDefaults={resolvedDefaults}
@@ -424,9 +440,9 @@ export default function VariantEditorPage() {
       <PromptDialog
         open={renameOpen}
         onOpenChange={setRenameOpen}
-        title={t("renameVariant")}
+        title={duplicateMode ? t("duplicateNameTitle") : t("renameVariant")}
         label={t("variantNameLabel")}
-        initialValue={variant?.name ?? ""}
+        initialValue={displayName ?? ""}
         onSubmit={handleRename}
       />
 

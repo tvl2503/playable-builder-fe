@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { useRequireAuth } from "@/lib/auth/use-require-auth";
-import { api, exportBuild, type ApiReuploadPreview, type ApiVariant } from "@/lib/api";
+import { api, exportBuild, type ApiReuploadPreview, type ApiVariant, type ExportProgress } from "@/lib/api";
 import { can, canOnResource } from "@/lib/auth/permissions";
 import { swrKeys } from "@/lib/api/swr-keys";
 import { diffFieldsRegistry, variantsAffectedByRemoval, type FieldsRegistryDiff } from "@/lib/cocos/fieldsRegistryDiff";
@@ -60,6 +60,12 @@ export function useBuildDetailPage() {
   const [selectedVariantIds, setSelectedVariantIds] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
+  // % tải về (0–100); null = server còn đang ráp file hoặc không biết tổng dung lượng -> thanh tiến độ chạy qua lại.
+  const exportPercent =
+    exportProgress?.phase === "downloading" && exportProgress.total
+      ? Math.min(100, Math.round((exportProgress.loaded / exportProgress.total) * 100))
+      : null;
 
   const [copyingVariantId, setCopyingVariantId] = useState<string | null>(null);
   const [copiedVariantId, setCopiedVariantId] = useState<string | null>(null);
@@ -202,11 +208,12 @@ export function useBuildDetailPage() {
     setExporting(true);
     setExportError(null);
     try {
-      await exportBuild(session.accessToken, buildId, selectedNetworks, selectedVariantIds);
+      await exportBuild(session.accessToken, buildId, selectedNetworks, selectedVariantIds, setExportProgress);
     } catch (e) {
       setExportError(e instanceof Error ? e.message : String(e));
     } finally {
       setExporting(false);
+      setExportProgress(null);
     }
   };
 
@@ -284,6 +291,8 @@ export function useBuildDetailPage() {
     copyLinkError,
     handleCopyVariantShareLink,
     exporting,
+    exportProgress,
+    exportPercent,
     exportError,
     handleExport,
     deleteVariant,

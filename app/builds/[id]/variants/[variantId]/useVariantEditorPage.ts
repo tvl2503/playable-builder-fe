@@ -7,6 +7,7 @@ import {
   api,
   fetchArtifactBlob,
   type ApiSharedPreviewLink,
+  type ApiVariant,
   type PlaygroundConfig,
 } from "@/lib/api";
 import { useRequireAuth } from "@/lib/auth/use-require-auth";
@@ -393,26 +394,68 @@ export function useVariantEditorPage() {
     }
   };
 
+  /**
+   * Tên đang sửa (chưa lưu) + chế độ nhân bản, gắn theo variantId (đổi sang biến thể khác là tự coi như rỗng, khỏi
+   * cần effect reset). Đổi tên / nhân bản trong editor KHÔNG gọi API ngay, chỉ ghi vào đây; bấm "Lưu" mới gửi chung
+   * 1 request với config (xem handleSave). `duplicate: true` = đang soạn 1 bản sao chưa tạo trên server.
+   */
+  const [draftState, setDraftState] = useState<{ variantId: string; name: string | null; duplicate: boolean } | null>(null);
+  const draft = draftState?.variantId === variantId ? draftState : null;
+  const draftName = draft?.name ?? null;
+  const duplicateMode = draft?.duplicate ?? false;
+  const displayName = draftName ?? variant?.name ?? null;
+
+  /**
+   * Lưu = ĐÚNG 1 request: chế độ nhân bản -> `POST /variants/:id/duplicate` kèm tên + config đang sửa (bản gốc giữ
+   * nguyên); bình thường -> `PATCH /variants/:id` kèm config + tên (chỉ gửi tên khi đã đổi). Xong thì cập nhật luôn
+   * cache SWR danh sách biến thể (+ dung lượng) của concept — SWRConfig tắt revalidate khi mount lại, không làm thì
+   * quay về trang concept vẫn thấy list cũ cho tới khi reload.
+   */
   const handleSave = async () => {
-    if (!session) return;
+    if (!session || !variant) return;
 
     setSaving(true);
     setSaveError(null);
     setSaved(false);
 
     try {
-      const updated = await api.updateVariantConfig(
-        session.accessToken,
-        variantId,
-        config,
-        Array.from(autoFilledKeysRef.current),
-      );
+      const autoFilledKeys = Array.from(autoFilledKeysRef.current);
+      const nameChanged = draftName !== null && draftName !== variant.name;
+      let saved: ApiVariant;
 
-      mutateVariant(updated, {
-        revalidate: false,
-      });
+      if (duplicateMode) {
+        saved = await api.duplicateVariant(session.accessToken, variantId, {
+          name: draftName ?? undefined,
+          config,
+          autoFilledKeys,
+        });
+      } else {
+        saved = await api.updateVariant(session.accessToken, variantId, {
+          config,
+          autoFilledKeys,
+          ...(nameChanged ? { name: draftName } : {}),
+        });
+        mutateVariant(saved, { revalidate: false });
+      }
+
+      // Response đã là bản đầy đủ (VariantWithMeta) -> chỉ ghi đúng 1 dòng vào cache, KHÔNG gọi lại API list:
+      // sửa = thay dòng cùng id, nhân bản = thêm dòng mới lên đầu. Trang concept tự sort theo updatedAt.
+      mutateGlobal<ApiVariant[]>(
+        swrKeys.variants(buildId),
+        (prev) => (prev ? [saved, ...prev.filter((v) => v.id !== saved.id)] : prev),
+        { revalidate: false },
+      );
+      // Dung lượng: dùng luôn số ước lượng của config vừa lưu (estimatedSize), không tính lại cả bảng.
+      if (estimatedSize !== null) {
+        mutateGlobal<Record<string, number>>(
+          swrKeys.variantSizes(buildId),
+          (prev) => (prev ? { ...prev, [saved.id]: estimatedSize } : prev),
+          { revalidate: false },
+        );
+      }
 
       setSaved(true);
+      setDraftState(null);
       router.push(routes.build(buildId));
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e));
@@ -421,43 +464,27 @@ export function useVariantEditorPage() {
     }
   };
 
-  /** Đổi tên biến thể ngay trong editor — chỉ đổi `name`, không đụng tới config đang sửa dở (chưa lưu). Lỗi (vd trùng tên) để PromptDialog tự hiện. */
-  const handleRename = async (name: string) => {
-    if (!session) return;
-    const updated = await api.renameVariant(session.accessToken, variantId, name);
-    mutateVariant(updated, { revalidate: false });
-    // Danh sách biến thể ở trang concept cũng phải thấy tên mới khi quay lại.
-    mutateGlobal(swrKeys.variants(buildId));
+  const handleRename = (name: string) => {
+    const trimmed = name.trim();
+    if (trimmed) setDraftState({ variantId, name: trimmed, duplicate: duplicateMode });
   };
 
-  const [duplicating, setDuplicating] = useState(false);
-  const [duplicateError, setDuplicateError] = useState<string | null>(null);
-
-  /**
-   * Nhân bản biến thể rồi chuyển sang editor của bản sao. Backend chỉ copy config ĐÃ LƯU, nên nếu đang có thay
-   * đổi chưa lưu thì ghi luôn config đang thấy trên màn hình vào bản sao (bản gốc giữ nguyên như lúc lưu gần nhất).
-   */
-  const handleDuplicate = async () => {
-    if (!session || !variant) return;
-    setDuplicating(true);
-    setDuplicateError(null);
-    try {
-      const created = await api.duplicateVariant(session.accessToken, variantId);
-      if (JSON.stringify(config) !== JSON.stringify(variant.config)) {
-        await api.updateVariantConfig(
-          session.accessToken,
-          created.id,
-          config,
-          Array.from(autoFilledKeysRef.current),
-        );
-      }
-      mutateGlobal(swrKeys.variants(buildId));
-      router.push(routes.buildVariant(buildId, created.id));
-    } catch (e) {
-      setDuplicateError(e instanceof Error ? e.message : String(e));
-      setDuplicating(false);
-    }
+  /** Vào chế độ nhân bản: chỉ đặt tên gợi ý "<tên> (copy)" — chưa gọi API, page tự mở hộp đặt tên ngay sau đó. */
+  const startDuplicate = () => {
+    if (!variant) return;
+    setDraftState({ variantId, name: `${draftName ?? variant.name} (copy)`, duplicate: true });
+    setSaved(false);
+    setSaveError(null);
   };
+
+  const cancelDuplicate = () => {
+    setDraftState(null);
+    setSaveError(null);
+  };
+
+  // Chế độ nhân bản chỉ cần quyền tạo biến thể (bản sao thuộc về user này), không cần quyền sửa bản gốc.
+  const canSave = duplicateMode ? canDuplicate : canEdit;
+  const hasUnsavedName = draftName !== null && (duplicateMode || draftName !== variant?.name);
 
   // Dung lượng ước lượng của file export theo config ĐANG sửa (chưa cần lưu) — debounce để không gọi API mỗi lần kéo slider.
   const [estimatedSize, setEstimatedSize] = useState<number | null>(null);
@@ -498,12 +525,16 @@ export function useVariantEditorPage() {
     saveError,
     saved,
     handleSave,
+    canSave,
+
+    displayName,
+    hasUnsavedName,
     handleRename,
 
     canDuplicate,
-    duplicating,
-    duplicateError,
-    handleDuplicate,
+    duplicateMode,
+    startDuplicate,
+    cancelDuplicate,
 
     shareLink,
     sharing,

@@ -11,6 +11,7 @@ export { ConfirmDialog } from "./ConfirmDialog";
 export { Dialog } from "./Dialog";
 export { default as Input } from "./Input";
 export { default as NumberInput } from "./NumberInput";
+export { default as ProgressBar } from "./ProgressBar";
 export { default as Select } from "./Select";
 export { default as Slider } from "./Slider";
 export { default as Switch } from "./Switch";

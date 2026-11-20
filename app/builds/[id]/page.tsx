@@ -12,6 +12,7 @@ import {
   ConfirmDialog,
   Dialog,
   Input,
+  ProgressBar,
   PromptDialog,
   Select,
   Table,
@@ -112,6 +113,8 @@ export default function BuildDetailPage() {
     copyLinkError,
     handleCopyVariantShareLink,
     exporting,
+    exportProgress,
+    exportPercent,
     exportError,
     handleExport,
     deleteVariant,
@@ -377,9 +380,25 @@ export default function BuildDetailPage() {
               className="self-start"
             >
               {exporting
-                ? t("building")
+                ? t("exportingButton")
                 : t("exportButton", { networks: selectedNetworks.length || 0, variants: selectedVariantIds.length || 0 })}
             </Button>
+            {exporting && exportProgress && (
+              <div className="flex max-w-sm flex-col gap-1.5">
+                <ProgressBar value={exportPercent} />
+                <p className="text-[11px] tabular-nums text-zinc-500">
+                  {exportProgress.phase === "processing"
+                    ? t("exportProcessing")
+                    : exportPercent !== null
+                      ? t("exportDownloadingPercent", {
+                          percent: exportPercent,
+                          loaded: formatSize(exportProgress.loaded),
+                          total: formatSize(exportProgress.total ?? 0),
+                        })
+                      : t("exportDownloadingSize", { loaded: formatSize(exportProgress.loaded) })}
+                </p>
+              </div>
+            )}
           </Card>
         )}
 
